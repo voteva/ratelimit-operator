@@ -1,0 +1,13 @@
+﻿kind: Service
+apiVersion: v1
+metadata:
+  name: rate-limit-server
+  namespace: test-project
+spec:
+  ports:
+    - name: grpc-rate-limiter
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
+  selector:
+    app: rate-limit-server

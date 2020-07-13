@@ -1,0 +1,43 @@
+﻿kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: rate-limit-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rate-limit-server
+  template:
+    metadata:
+      labels:
+        app: rate-limit-server
+      annotations:
+        sidecar.istio.io/inject: 'true'
+    spec:
+      volumes:
+        - name: config
+          configMap:
+            name: rate-limit-server-config
+            items:
+              - key: rate_limit.property
+                path: config.yaml
+            defaultMode: 420
+      containers:
+        - name: redis
+          image: 'redis:alpine'
+        - resources: {}
+          name: rate-limit-server
+          ports:
+            - containerPort: 8081
+              protocol: TCP
+            - containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /data/ratelimit/config
+          terminationMessagePolicy: File
+          envFrom:
+            - configMapRef:
+                name: rate-limit-config
+          image: evil26r/service_rite_limit

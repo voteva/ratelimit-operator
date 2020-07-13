@@ -1,0 +1,20 @@
+﻿kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: rate-limit-server-config
+  namespace: test-project
+data:
+  LOG_LEVEL: DEBUG
+  REDIS_SOCKET_TYPE: tcp
+  REDIS_URL: 'localhost:6379'
+  RUNTIME_ROOT: /data/ratelimit
+  RUNTIME_SUBDIRECTORY: config
+  USE_STATSD: 'false'
+  rate_limit.property: |
+    domain: test
+    descriptors:
+      - key: custom-rl-header
+        value: setting1
+        rate_limit:
+          unit: minute
+          requests_per_unit: 1

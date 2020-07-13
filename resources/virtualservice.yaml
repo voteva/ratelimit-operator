@@ -1,0 +1,22 @@
+﻿apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: rate-limit-server-vs
+  namespace: test-project
+spec:
+  gateways:
+    - istio-ingressgateway
+  hosts:
+    - rate-limit-server.test-project.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: rate-limit-server.test-project.svc.cluster.local
+  tcp:
+    - match:
+        - port: 8081
+      route:
+        - destination:
+            host: rate-limit-server.test-project.svc.cluster.local
+            port:
+              number: 8081
