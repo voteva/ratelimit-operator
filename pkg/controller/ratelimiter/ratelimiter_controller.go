@@ -5,6 +5,7 @@ import (
 
 	operatorsv1alpha1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,23 +23,16 @@ import (
 
 var log = logf.Log.WithName("controller_ratelimiter")
 
-/**
-* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
-* business logic.  Delete these comments after modifying this file.*
- */
-
 // Add creates a new RateLimiter Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	return &ReconcileRateLimiter{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
-// add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("ratelimiter-controller", mgr, controller.Options{Reconciler: r})
@@ -52,7 +46,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner RateLimiter
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
@@ -65,10 +58,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-// blank assignment to verify that ReconcileRateLimiter implements reconcile.Reconciler
 var _ reconcile.Reconciler = &ReconcileRateLimiter{}
 
-// ReconcileRateLimiter reconciles a RateLimiter object
 type ReconcileRateLimiter struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
@@ -76,13 +67,6 @@ type ReconcileRateLimiter struct {
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a RateLimiter object and makes changes based on the state read
-// and what is in the RateLimiter.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
-// Note:
-// The Controller will requeue the Request to be processed again if the returned error is non-nil or
-// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling RateLimiter")
@@ -97,32 +81,58 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
-
-	// Set RateLimiter instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	// Check Deployment
+	found := &appsv1.Deployment{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
-		reqLogger.Info("Creating a new Pod", "Pod.Namespace", pod.Namespace, "Pod.Name", pod.Name)
-		err = r.client.Create(context.TODO(), pod)
+		// Define a new deployment
+		dep := r.deploymentForRateLimiter(instance)
+		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+		err = r.client.Create(context.TODO(), dep)
 		if err != nil {
+			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
 			return reconcile.Result{}, err
 		}
-
-		// Pod created successfully - don't requeue
-		return reconcile.Result{}, nil
+		// Deployment created successfully - return and requeue
+		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
+		reqLogger.Error(err, "Failed to get Deployment")
 		return reconcile.Result{}, err
+	}
+
+	// Check ConfigMap
+	foundConfigMap := &corev1.ConfigMap{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundConfigMap)
+	if err != nil && errors.IsNotFound(err) {
+		// Define a new config map
+		cm := r.configMapForRateLimiter(instance)
+		reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
+		err = r.client.Create(context.TODO(), cm)
+		if err != nil {
+			reqLogger.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
+			return reconcile.Result{}, err
+		}
+		// Deployment created successfully - return and requeue
+		return reconcile.Result{Requeue: true}, nil
+	} else if err != nil {
+		reqLogger.Error(err, "Failed to get ConfigMap")
+		return reconcile.Result{}, err
+	}
+
+	// Check Pod size = 1
+	var expectedSize int32 = 1
+	if *found.Spec.Replicas != expectedSize {
+		found.Spec.Replicas = &expectedSize
+		err = r.client.Update(context.TODO(), found)
+		if err != nil {
+			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+			return reconcile.Result{}, err
+		}
+		// Spec updated - return and requeue
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	// Pod already exists - don't requeue
@@ -130,7 +140,6 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 	return reconcile.Result{}, nil
 }
 
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
 func newPodForCR(cr *operatorsv1alpha1.RateLimiter) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,
@@ -151,4 +160,104 @@ func newPodForCR(cr *operatorsv1alpha1.RateLimiter) *corev1.Pod {
 			},
 		},
 	}
+}
+
+func (r *ReconcileRateLimiter) deploymentForRateLimiter(m *operatorsv1alpha1.RateLimiter) *appsv1.Deployment {
+	ls := labelsForRateLimiter(m.Name)
+	var replicas int32 = 1      // TODO
+	var defaultMode int32 = 420 // TODO
+
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name,
+			Namespace: m.Namespace,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: ls,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels:      ls,
+					Annotations: map[string]string{"sidecar.istio.io/inject": "true"},
+				},
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{{
+						Name: "config",
+						VolumeSource: corev1.VolumeSource{
+							ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: m.Name,
+								},
+								DefaultMode: &defaultMode,
+								Items: []corev1.KeyToPath{{
+									Key:  "rate_limit.property",
+									Path: "config.yaml",
+								}},
+							},
+						},
+					}},
+					Containers: []corev1.Container{
+						{
+							Name:  "redis",
+							Image: "redis:alpine",
+						},
+						{
+							Name:  "rate-limit-server",
+							Image: "evil26r/service_rite_limit",
+							Ports: []corev1.ContainerPort{{
+								ContainerPort: 8080,
+								Protocol:      "TCP",
+							}},
+							VolumeMounts: []corev1.VolumeMount{{
+								Name:      "config",
+								MountPath: "/data/ratelimit/config",
+							}},
+							TerminationMessagePolicy: "File",
+							EnvFrom: []corev1.EnvFromSource{{
+								ConfigMapRef: &corev1.ConfigMapEnvSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: m.Name,
+									},
+								},
+							}},
+						}},
+				},
+			},
+		},
+	}
+	controllerutil.SetControllerReference(m, dep, r.scheme)
+	return dep
+}
+
+func labelsForRateLimiter(name string) map[string]string {
+	return map[string]string{"app": "ratelimiter", "ratelimiter_cr": name}
+}
+
+func (r *ReconcileRateLimiter) configMapForRateLimiter(m *operatorsv1alpha1.RateLimiter) *corev1.ConfigMap {
+	configMap := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name,
+			Namespace: m.Namespace,
+		},
+		Data: map[string]string{
+			"LOG_LEVEL":            "DEBUG",
+			"REDIS_SOCKET_TYPE":    "tcp",
+			"REDIS_URL":            "localhost:6379",
+			"RUNTIME_ROOT":         "/data/ratelimit",
+			"RUNTIME_SUBDIRECTORY": "config",
+			"USE_STATSD":           "false",
+			"rate_limit.property": `
+				domain: test
+				descriptors:
+				  - key: custom-rl-header
+					value: setting1
+					rate_limit:
+					  unit: minute
+					  requests_per_unit: 1`,
+		},
+	}
+	controllerutil.SetControllerReference(m, configMap, r.scheme)
+	return configMap
 }
