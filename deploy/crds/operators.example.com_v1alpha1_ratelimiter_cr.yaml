@@ -1,0 +1,7 @@
+apiVersion: operators.example.com/v1alpha1
+kind: RateLimiter
+metadata:
+  name: example-ratelimiter
+spec:
+  # Add fields here
+  size: 3
