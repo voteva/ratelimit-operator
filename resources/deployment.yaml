@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 metadata:
   name: rate-limit-server
-  namespace: default
+  namespace: test-project
 spec:
   replicas: 1
   selector:
