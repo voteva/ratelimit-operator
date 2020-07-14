@@ -5,11 +5,9 @@ import (
 
 	operatorsv1alpha1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -82,81 +80,25 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
-	// Check Deployment
-	foundDeployment := &appsv1.Deployment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundDeployment)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new deployment
-		dep := r.DeploymentForRateLimiter(instance)
-		reqLogger.Info("Creating a new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.client.Create(context.TODO(), dep)
-		if err != nil {
-			reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-			return reconcile.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Deployment")
+	if _, err := r.reconcileDeployment(request, instance); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Check ConfigMap
-	foundConfigMap := &corev1.ConfigMap{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundConfigMap)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new config map
-		cm := r.ConfigMapForRateLimiter(instance)
-		reqLogger.Info("Creating a new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
-		err = r.client.Create(context.TODO(), cm)
-		if err != nil {
-			reqLogger.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
-			return reconcile.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get ConfigMap")
+	if _, err := r.reconcileConfigMap(request, instance); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Check Service
-	foundService := &corev1.Service{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)
-	if err != nil && errors.IsNotFound(err) {
-		// Define a new config map
-		cm := r.ServiceForRateLimiter(instance)
-		reqLogger.Info("Creating a new Service", "Service.Namespace", cm.Namespace, "Service.Name", cm.Name)
-		err = r.client.Create(context.TODO(), cm)
-		if err != nil {
-			reqLogger.Error(err, "Failed to create new Service", "Service.Namespace", cm.Namespace, "Service.Name", cm.Name)
-			return reconcile.Result{}, err
-		}
-		// Deployment created successfully - return and requeue
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		reqLogger.Error(err, "Failed to get Service")
+	if _, err := r.reconcileService(request, instance); err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// TODO check VirtualService
-
-	// TODO check EnvoyFilter
-
-	// Check Pod size = 1
-	var expectedSize int32 = 1
-	if *foundDeployment.Spec.Replicas != expectedSize {
-		foundDeployment.Spec.Replicas = &expectedSize
-		err = r.client.Update(context.TODO(), foundDeployment)
-		if err != nil {
-			reqLogger.Error(err, "Failed to update Deployment", "Deployment.Namespace", foundDeployment.Namespace, "Deployment.Name", foundDeployment.Name)
-			return reconcile.Result{}, err
-		}
-		// Spec updated - return and requeue
-		return reconcile.Result{Requeue: true}, nil
+	if _, err := r.reconcileVirtualService(request, instance); err != nil {
+		return reconcile.Result{}, err
 	}
 
-	// Pod already exists - don't requeue
-	reqLogger.Info("Skip reconcile: Pod already exists", "Pod.Namespace", foundDeployment.Namespace, "Pod.Name", foundDeployment.Name)
+	if _, err := r.reconcileEnvoyFilter(request, instance); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
 }
