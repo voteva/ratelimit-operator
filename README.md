@@ -4,20 +4,20 @@
 
 * Create the sample CRD
 ~~~
-$ oc apply -f deploy/crds/operators.example.com_v1alpha1_ratelimiter_cr.yaml
+$ oc create -f deploy/crds/operators.example.com_v1alpha1_ratelimiter_cr.yaml
 ~~~
 
 * Deploy the Operator along with set-up the RBAC
 ~~~
-$ oc apply -f deploy/service_account.yaml
-$ oc apply -f deploy/role.yaml
-$ oc apply -f deploy/role_binding.yaml
-$ oc apply -f deploy/operator.yaml
+$ oc create -f deploy/service_account.yaml
+$ oc create -f deploy/role.yaml
+$ oc create -f deploy/role_binding.yaml
+$ oc create -f deploy/operator.yaml
 ~~~
 
 * Create the RateLimiter Custom Resource(CR)
 ~~~
-$ oc apply -f deploy/crds/operators.example.com_ratelimiters_crd.yaml
+$ oc create -f deploy/crds/operators.example.com_ratelimiters_crd.yaml
 ~~~
 
 * Verify the application deployment and POD has been created
