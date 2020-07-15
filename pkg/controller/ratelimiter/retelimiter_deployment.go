@@ -97,10 +97,15 @@ func (r *ReconcileRateLimiter) buildDeployment(m *operatorsv1alpha1.RateLimiter)
 						{
 							Name:  "rate-limit-server",
 							Image: "evil26r/service_rite_limit",
-							Ports: []corev1.ContainerPort{{
-								ContainerPort: 8080,
-								Protocol:      "TCP",
-							}},
+							Ports: []corev1.ContainerPort{
+								{
+									ContainerPort: 8080,
+									Protocol:      "TCP",
+								},
+								{
+									ContainerPort: 8081,
+									Protocol:      "TCP",
+								}},
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
 								MountPath: "/data/ratelimit/config",

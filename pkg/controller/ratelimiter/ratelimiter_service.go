@@ -2,6 +2,8 @@ package ratelimiter
 
 import (
 	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,7 +38,21 @@ func (r *ReconcileRateLimiter) reconcileService(request reconcile.Request, insta
 
 func (r *ReconcileRateLimiter) buildService(m *operatorsv1alpha1.RateLimiter) *corev1.Service {
 	service := &corev1.Service{
-		// TODO implement
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.Name,
+			Namespace: m.Namespace,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{{
+				Name:       "grpc-rate-limiter",
+				Protocol:   "TCP",
+				Port:       8081,
+				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 8081},
+			}},
+			Selector: map[string]string{
+				"app": "rate-limit-server",
+			},
+		},
 	}
 	controllerutil.SetControllerReference(m, service, r.scheme)
 	return service
