@@ -7,6 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.9.4 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.8.3 // indirect
 	github.com/champly/lib4go v0.0.0-20200508051201-2cb0f4ccb079
+	github.com/gogo/protobuf v1.3.1
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/operator-framework/operator-sdk v0.18.2
 	github.com/spf13/pflag v1.0.5
@@ -14,6 +15,7 @@ require (
 	istio.io/client-go v0.0.0-20200518164621-ef682e2929e5
 	istio.io/gogo-genproto v0.0.0-20200422223746-8166b73efbae // indirect
 	k8s.io/api v0.18.2
+	k8s.io/apiextensions-apiserver v0.18.2
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v12.0.0+incompatible
 	sigs.k8s.io/controller-runtime v0.6.0

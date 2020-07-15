@@ -17,6 +17,9 @@ import (
 	"ratelimit-operator/pkg/controller"
 	"ratelimit-operator/version"
 
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	istio_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -119,6 +122,18 @@ func main() {
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
+		os.Exit(1)
+	}
+	if err := clientgoscheme.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "add clientgo to scheme error: %+v", err)
+		os.Exit(1)
+	}
+	if err := apiextensionsv1beta1.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "add apiextensionsv1beta1 to scheme error: %+v", err)
+		os.Exit(1)
+	}
+	if err := istio_v1alpha3.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "add istio CRDs to scheme error: %+v", err)
 		os.Exit(1)
 	}
 

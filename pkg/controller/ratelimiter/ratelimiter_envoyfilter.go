@@ -21,11 +21,11 @@ func (r *ReconcileRateLimiter) reconcileEnvoyFilter(request reconcile.Request, i
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundEnvoyFilter)
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new EnvoyFilter
-		cm := r.buildEnvoyFilter(instance)
-		reqLogger.Info("Creating a new EnvoyFilter", "EnvoyFilter.Namespace", cm.Namespace, "EnvoyFilter.Name", cm.Name)
-		err = r.client.Create(context.TODO(), cm)
+		ef := r.buildEnvoyFilter(instance)
+		reqLogger.Info("Creating a new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
+		err = r.client.Create(context.TODO(), ef)
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Namespace", cm.Namespace, "EnvoyFilter.Name", cm.Name)
+			reqLogger.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
 			return reconcile.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
@@ -72,12 +72,12 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(m *operatorsv1alpha1.RateLimiter
 					Match: &networking.EnvoyFilter_EnvoyConfigObjectMatch{
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_Cluster{
 							Cluster: &networking.EnvoyFilter_ClusterMatch{
-								Service: "rate-limit-server.test-project.svc.cluster.local",
+								Service: "rate-limit-server." + m.Namespace + ".svc.cluster.local",
 							},
 						},
 					},
 					Patch: &networking.EnvoyFilter_Patch{
-						Operation: networking.EnvoyFilter_Patch_INSERT_BEFORE,
+						Operation: networking.EnvoyFilter_Patch_ADD,
 						Value:     getPatch(patch2),
 					},
 				},
@@ -97,7 +97,7 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(m *operatorsv1alpha1.RateLimiter
 						},
 					},
 					Patch: &networking.EnvoyFilter_Patch{
-						Operation: networking.EnvoyFilter_Patch_INSERT_BEFORE,
+						Operation: networking.EnvoyFilter_Patch_MERGE,
 						Value:     getPatch(patch3),
 					},
 				},
@@ -114,43 +114,38 @@ func getPatch(str string) *proto_types.Struct {
 }
 
 var patch1 = `
-operation: INSERT_BEFORE
-value:
-  config:
-    domain: test
-    failure_mode_deny: true
-    rate_limit_service:
-      grpc_service:
-        envoy_grpc:
-          cluster_name: rate_limit_service
-        timeout: 10s
+          config:
+            domain: test
+            failure_mode_deny: true
+            rate_limit_service:
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: rate_limit_service
+                timeout: 10s
+          name: envoy.rate_limit
 `
 
 var patch2 = `
-operation: ADD
-value:
-  connect_timeout: 10s
-  http2_protocol_options: {}
-  lb_policy: ROUND_ROBIN
-  load_assignment:
-    cluster_name: rate_limit_service
-    endpoints:
-      - lb_endpoints:
-          - endpoint:
-              address:
-                socket_address:
-                  address: rate-limit-server.test-project.svc.cluster.local
-                  port_value: 8081
-  name: rate_limit_service
-  type: STRICT_DNS
+          connect_timeout: 10s
+          http2_protocol_options: {}
+          lb_policy: ROUND_ROBIN
+          load_assignment:
+            cluster_name: rate_limit_service
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: rate-limit-server.operator-test.svc.cluster.local
+                          port_value: 8081
+          name: rate_limit_service
+          type: STRICT_DNS
 `
 
 var patch3 = `
-operation: MERGE
-value:
-  rate_limits:
-    - actions:
-        - request_headers:
-            descriptor_key: custom-rl-header
-            header_name: custom-rl-header
+          rate_limits:
+            - actions:
+                - request_headers:
+                    descriptor_key: custom-rl-header
+                    header_name: custom-rl-header
 `

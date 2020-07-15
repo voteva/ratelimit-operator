@@ -3,6 +3,8 @@ package ratelimiter
 import (
 	"context"
 
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	appsv1 "k8s.io/api/apps/v1"
 	operatorsv1alpha1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,11 +44,50 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to secondary resource Pods and requeue the owner RateLimiter
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+	// Watch for changes to secondary resources and requeue the owner RateLimiter
+	log.Info("Watch for changes to appsv1.Deployment")
+	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &operatorsv1alpha1.RateLimiter{},
 	})
+	if err != nil {
+		return err
+	}
+
+	log.Info("Watch for changes to corev1.Service")
+	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &operatorsv1alpha1.RateLimiter{},
+	})
+	if err != nil {
+		return err
+	}
+
+	log.Info("Watch for changes to corev1.ConfigMap")
+	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &operatorsv1alpha1.RateLimiter{},
+	})
+	if err != nil {
+		return err
+	}
+
+	log.Info("Watch for changes to v1alpha3.VirtualService")
+	err = c.Watch(&source.Kind{Type: &v1alpha3.VirtualService{}},
+		&handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &operatorsv1alpha1.RateLimiter{},
+		})
+	if err != nil {
+		return err
+	}
+
+	log.Info("Watch for changes to v1alpha3.EnvoyFilter")
+	err = c.Watch(&source.Kind{Type: &v1alpha3.EnvoyFilter{}},
+		&handler.EnqueueRequestForOwner{
+			IsController: true,
+			OwnerType:    &operatorsv1alpha1.RateLimiter{},
+		})
 	if err != nil {
 		return err
 	}
@@ -67,7 +108,6 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling RateLimiter")
 
-	// Fetch the RateLimiter instance
 	instance := &operatorsv1alpha1.RateLimiter{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {

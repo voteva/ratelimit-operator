@@ -2,10 +2,10 @@ package ratelimiter
 
 import (
 	"context"
-	"istio.io/api/networking/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	networkingv1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	networking "istio.io/api/networking/v1alpha3"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	operatorsv1alpha1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -15,15 +15,16 @@ import (
 func (r *ReconcileRateLimiter) reconcileVirtualService(request reconcile.Request, instance *operatorsv1alpha1.RateLimiter) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 
-	foundVirtualService := &networkingv1beta1.VirtualService{}
+	foundVirtualService := &v1alpha3.VirtualService{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundVirtualService)
+
 	if err != nil && errors.IsNotFound(err) {
 		// Define a new VirtualService
-		cm := r.buildVirtualService(instance)
-		reqLogger.Info("Creating a new VirtualService", "VirtualService.Namespace", cm.Namespace, "VirtualService.Name", cm.Name)
-		err = r.client.Create(context.TODO(), cm)
+		vs := r.buildVirtualService(instance)
+		reqLogger.Info("Creating a new VirtualService", "VirtualService.Namespace", vs.Namespace, "VirtualService.Name", vs.Name)
+		err = r.client.Create(context.TODO(), vs)
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new VirtualService", "VirtualService.Namespace", cm.Namespace, "VirtualService.Name", cm.Name)
+			reqLogger.Error(err, "Failed to create new VirtualService", "VirtualService.Namespace", vs.Namespace, "VirtualService.Name", vs.Name)
 			return reconcile.Result{}, err
 		}
 		// Deployment created successfully - return and requeue
@@ -35,34 +36,34 @@ func (r *ReconcileRateLimiter) reconcileVirtualService(request reconcile.Request
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildVirtualService(m *operatorsv1alpha1.RateLimiter) *networkingv1beta1.VirtualService {
-	virtualService := &networkingv1beta1.VirtualService{
+func (r *ReconcileRateLimiter) buildVirtualService(m *operatorsv1alpha1.RateLimiter) *v1alpha3.VirtualService {
+	virtualService := &v1alpha3.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,
 			Namespace: m.Namespace,
 		},
-		Spec: v1beta1.VirtualService{
+		Spec: networking.VirtualService{
 			Gateways: []string{
 				"istio-ingressgateway",
 			},
 			Hosts: []string{
-				"rate-limit-server.test-project.svc.cluster.local",
+				"rate-limit-server." + m.Namespace + ".svc.cluster.local",
 			},
-			Http: []*v1beta1.HTTPRoute{{
-				Route: []*v1beta1.HTTPRouteDestination{{
-					Destination: &v1beta1.Destination{
-						Host: "rate-limit-server.test-project.svc.cluster.local",
+			Http: []*networking.HTTPRoute{{
+				Route: []*networking.HTTPRouteDestination{{
+					Destination: &networking.Destination{
+						Host: "rate-limit-server." + m.Namespace + ".svc.cluster.local",
 					},
 				}},
 			}},
-			Tcp: []*v1beta1.TCPRoute{{
-				Match: []*v1beta1.L4MatchAttributes{{
+			Tcp: []*networking.TCPRoute{{
+				Match: []*networking.L4MatchAttributes{{
 					Port: 8081,
 				}},
-				Route: []*v1beta1.RouteDestination{{
-					Destination: &v1beta1.Destination{
-						Host: "rate-limit-server.test-project.svc.cluster.local",
-						Port: &v1beta1.PortSelector{
+				Route: []*networking.RouteDestination{{
+					Destination: &networking.Destination{
+						Host: "rate-limit-server." + m.Namespace + ".svc.cluster.local",
+						Port: &networking.PortSelector{
 							Number: 8081,
 						},
 					},

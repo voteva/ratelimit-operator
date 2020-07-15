@@ -91,3 +91,9 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - networking.istio.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
