@@ -5,7 +5,7 @@ import (
 
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	appsv1 "k8s.io/api/apps/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
+	"ratelimit-operator/pkg/apis/operators/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

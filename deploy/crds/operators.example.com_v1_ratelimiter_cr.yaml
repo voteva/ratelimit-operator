@@ -1,0 +1,6 @@
+apiVersion: operators.example.com/v1
+kind: RateLimiter
+metadata:
+  name: ratelimit-service
+spec:
+  size: 1

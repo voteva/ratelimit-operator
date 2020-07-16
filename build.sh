@@ -1,4 +1,4 @@
-export IMAGE=tanyavoteva/ratelimit-operator:v0.1
+export IMAGE=tanyavoteva/ratelimit-operator:v0.0.1
 echo $IMAGE
 
 echo "operator-sdk build ..."

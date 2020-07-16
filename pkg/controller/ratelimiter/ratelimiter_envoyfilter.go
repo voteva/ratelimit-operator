@@ -8,7 +8,7 @@ import (
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	v1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
+	"ratelimit-operator/pkg/apis/operators/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"github.com/champly/lib4go/encoding"
