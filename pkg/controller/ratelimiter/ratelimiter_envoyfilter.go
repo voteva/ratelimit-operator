@@ -2,42 +2,40 @@ package ratelimiter
 
 import (
 	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	networking "istio.io/api/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	operatorsv1alpha1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
+	v1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"github.com/champly/lib4go/encoding"
 	proto_types "github.com/gogo/protobuf/types"
 )
 
-func (r *ReconcileRateLimiter) reconcileEnvoyFilter(request reconcile.Request, instance *operatorsv1alpha1.RateLimiter) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-
+func (r *ReconcileRateLimiter) reconcileEnvoyFilter(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundEnvoyFilter)
+
+	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundEnvoyFilter)
 	if err != nil && errors.IsNotFound(err) {
-		// Define a new EnvoyFilter
 		ef := r.buildEnvoyFilter(instance)
-		reqLogger.Info("Creating a new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
-		err = r.client.Create(context.TODO(), ef)
+		log.Info("Creating a new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
+		err = r.client.Create(ctx, ef)
 		if err != nil {
-			reqLogger.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
+			log.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
 			return reconcile.Result{}, err
 		}
-		// Deployment created successfully - return and requeue
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
-		reqLogger.Error(err, "Failed to get EnvoyFilter")
+		log.Error(err, "Failed to get EnvoyFilter")
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildEnvoyFilter(m *operatorsv1alpha1.RateLimiter) *v1alpha3.EnvoyFilter {
+func (r *ReconcileRateLimiter) buildEnvoyFilter(m *v1.RateLimiter) *v1alpha3.EnvoyFilter {
 	envoyFilter := &v1alpha3.EnvoyFilter{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      m.Name,

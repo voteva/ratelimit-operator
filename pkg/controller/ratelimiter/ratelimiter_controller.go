@@ -5,7 +5,7 @@ import (
 
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	appsv1 "k8s.io/api/apps/v1"
-	operatorsv1alpha1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
+	v1 "ratelimit-operator/pkg/apis/operators/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -39,7 +39,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource RateLimiter
-	err = c.Watch(&source.Kind{Type: &operatorsv1alpha1.RateLimiter{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1.RateLimiter{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	log.Info("Watch for changes to appsv1.Deployment")
 	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &operatorsv1alpha1.RateLimiter{},
+		OwnerType:    &v1.RateLimiter{},
 	})
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	log.Info("Watch for changes to corev1.Service")
 	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &operatorsv1alpha1.RateLimiter{},
+		OwnerType:    &v1.RateLimiter{},
 	})
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	log.Info("Watch for changes to corev1.ConfigMap")
 	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &operatorsv1alpha1.RateLimiter{},
+		OwnerType:    &v1.RateLimiter{},
 	})
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	err = c.Watch(&source.Kind{Type: &v1alpha3.VirtualService{}},
 		&handler.EnqueueRequestForOwner{
 			IsController: true,
-			OwnerType:    &operatorsv1alpha1.RateLimiter{},
+			OwnerType:    &v1.RateLimiter{},
 		})
 	if err != nil {
 		return err
@@ -86,7 +86,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	err = c.Watch(&source.Kind{Type: &v1alpha3.EnvoyFilter{}},
 		&handler.EnqueueRequestForOwner{
 			IsController: true,
-			OwnerType:    &operatorsv1alpha1.RateLimiter{},
+			OwnerType:    &v1.RateLimiter{},
 		})
 	if err != nil {
 		return err
@@ -108,8 +108,10 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling RateLimiter")
 
-	instance := &operatorsv1alpha1.RateLimiter{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	ctx := context.TODO()
+
+	instance := &v1.RateLimiter{}
+	err := r.client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -120,24 +122,24 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
-	if _, err := r.reconcileDeployment(request, instance); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileDeployment(ctx, instance); err != nil || result.Requeue {
+		return result, err
 	}
 
-	if _, err := r.reconcileConfigMap(request, instance); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {
+		return result, err
 	}
 
-	if _, err := r.reconcileService(request, instance); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileService(ctx, instance); err != nil || result.Requeue {
+		return result, err
 	}
 
-	if _, err := r.reconcileVirtualService(request, instance); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileVirtualService(ctx, instance); err != nil || result.Requeue {
+		return result, err
 	}
 
-	if _, err := r.reconcileEnvoyFilter(request, instance); err != nil {
-		return reconcile.Result{}, err
+	if result, err := r.reconcileEnvoyFilter(ctx, instance); err != nil || result.Requeue {
+		return result, err
 	}
 
 	return reconcile.Result{}, nil
