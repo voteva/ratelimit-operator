@@ -10,6 +10,7 @@ import (
 	"ratelimit-operator/pkg/apis/operators/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"gopkg.in/yaml.v2"
 )
 
 func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
@@ -32,11 +33,11 @@ func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildConfigMap(m *v1.RateLimiter) *corev1.ConfigMap {
+func (r *ReconcileRateLimiter) buildConfigMap(instance *v1.RateLimiter) *corev1.ConfigMap {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
 		},
 		Data: map[string]string{
 			"LOG_LEVEL":            "DEBUG",
@@ -45,16 +46,17 @@ func (r *ReconcileRateLimiter) buildConfigMap(m *v1.RateLimiter) *corev1.ConfigM
 			"RUNTIME_ROOT":         "/data/ratelimit",
 			"RUNTIME_SUBDIRECTORY": "config",
 			"USE_STATSD":           "false",
-			"rate_limit.property": `
-				domain: test
-				descriptors:
-				  - key: custom-rl-header
-					value: setting1
-					rate_limit:
-					  unit: minute
-					  requests_per_unit: 1`,
+			"rate_limit.property":  r.buildRateLimitPropertyValue(instance),
 		},
 	}
-	controllerutil.SetControllerReference(m, configMap, r.scheme)
+	controllerutil.SetControllerReference(instance, configMap, r.scheme)
 	return configMap
+}
+
+func (r *ReconcileRateLimiter) buildRateLimitPropertyValue(instance *v1.RateLimiter) string {
+	res, err := yaml.Marshal(&instance.Spec.RateLimitProperty)
+	if err != nil {
+		log.Error(err, "Failed to convert object to yaml")
+	}
+	return string(res)
 }

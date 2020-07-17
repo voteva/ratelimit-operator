@@ -32,41 +32,41 @@ func (r *ReconcileRateLimiter) reconcileVirtualService(ctx context.Context, inst
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildVirtualService(m *v1.RateLimiter) *v1alpha3.VirtualService {
+func (r *ReconcileRateLimiter) buildVirtualService(instance *v1.RateLimiter) *v1alpha3.VirtualService {
 	virtualService := &v1alpha3.VirtualService{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
 		},
 		Spec: networking.VirtualService{
 			Gateways: []string{
 				"istio-ingressgateway",
 			},
 			Hosts: []string{
-				"rate-limit-server." + m.Namespace + ".svc.cluster.local",
+				instance.Name + "." + instance.Namespace + ".svc.cluster.local",
 			},
 			Http: []*networking.HTTPRoute{{
 				Route: []*networking.HTTPRouteDestination{{
 					Destination: &networking.Destination{
-						Host: "rate-limit-server." + m.Namespace + ".svc.cluster.local",
+						Host: instance.Name + "." + instance.Namespace + ".svc.cluster.local",
 					},
 				}},
 			}},
 			Tcp: []*networking.TCPRoute{{
 				Match: []*networking.L4MatchAttributes{{
-					Port: 8081,
+					Port: uint32(instance.Spec.ServicePort),
 				}},
 				Route: []*networking.RouteDestination{{
 					Destination: &networking.Destination{
-						Host: "rate-limit-server." + m.Namespace + ".svc.cluster.local",
+						Host: instance.Name + "." + instance.Namespace + ".svc.cluster.local",
 						Port: &networking.PortSelector{
-							Number: 8081,
+							Number: uint32(instance.Spec.ServicePort),
 						},
 					},
 				}},
 			}},
 		},
 	}
-	controllerutil.SetControllerReference(m, virtualService, r.scheme)
+	controllerutil.SetControllerReference(instance, virtualService, r.scheme)
 	return virtualService
 }

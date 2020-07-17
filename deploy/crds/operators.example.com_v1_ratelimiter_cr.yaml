@@ -4,3 +4,12 @@ metadata:
   name: ratelimit-service
 spec:
   size: 1
+  servicePort: 8081
+  rateLimitProperty:
+    domain: test
+    descriptors:
+      - key: custom-rl-header
+        value: setting1
+        rate_limit:
+          unit: minute
+          requests_per_unit: 1

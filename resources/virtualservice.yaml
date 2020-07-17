@@ -2,7 +2,6 @@
 kind: VirtualService
 metadata:
   name: rate-limit-server-vs
-  namespace: test-project
 spec:
   gateways:
     - istio-ingressgateway

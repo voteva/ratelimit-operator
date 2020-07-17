@@ -45,18 +45,17 @@ func (r *ReconcileRateLimiter) reconcileDeployment(ctx context.Context, instance
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildDeployment(m *v1.RateLimiter) *appsv1.Deployment {
-	ls := LabelsForRateLimiter(m.Name)
-	var replicas int32 = 1      // TODO
+func (r *ReconcileRateLimiter) buildDeployment(instance *v1.RateLimiter) *appsv1.Deployment {
+	ls := LabelsForRateLimiter(instance.Name)
 	var defaultMode int32 = 420 // TODO
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: &instance.Spec.Size,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: ls,
 			},
@@ -71,7 +70,7 @@ func (r *ReconcileRateLimiter) buildDeployment(m *v1.RateLimiter) *appsv1.Deploy
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: m.Name,
+									Name: instance.Name,
 								},
 								DefaultMode: &defaultMode,
 								Items: []corev1.KeyToPath{{
@@ -87,26 +86,27 @@ func (r *ReconcileRateLimiter) buildDeployment(m *v1.RateLimiter) *appsv1.Deploy
 							Image: "redis:alpine",
 						},
 						{
-							Name:  "rate-limit-server",
+							Name:  instance.Name,
 							Image: "evil26r/service_rite_limit",
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8080,
-									Protocol:      "TCP",
+									Protocol:      corev1.ProtocolTCP,
 								},
 								{
-									ContainerPort: 8081,
-									Protocol:      "TCP",
-								}},
+									ContainerPort: instance.Spec.ServicePort,
+									Protocol:      corev1.ProtocolTCP,
+								},
+							},
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
 								MountPath: "/data/ratelimit/config",
 							}},
-							TerminationMessagePolicy: "File",
+							TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 							EnvFrom: []corev1.EnvFromSource{{
 								ConfigMapRef: &corev1.ConfigMapEnvSource{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: m.Name,
+										Name: instance.Name,
 									},
 								},
 							}},
@@ -115,6 +115,6 @@ func (r *ReconcileRateLimiter) buildDeployment(m *v1.RateLimiter) *appsv1.Deploy
 			},
 		},
 	}
-	controllerutil.SetControllerReference(m, dep, r.scheme)
+	controllerutil.SetControllerReference(instance, dep, r.scheme)
 	return dep
 }

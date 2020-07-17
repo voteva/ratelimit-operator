@@ -35,11 +35,11 @@ func (r *ReconcileRateLimiter) reconcileEnvoyFilter(ctx context.Context, instanc
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildEnvoyFilter(m *v1.RateLimiter) *v1alpha3.EnvoyFilter {
+func (r *ReconcileRateLimiter) buildEnvoyFilter(instance *v1.RateLimiter) *v1alpha3.EnvoyFilter {
 	envoyFilter := &v1alpha3.EnvoyFilter{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
 		},
 		Spec: networking.EnvoyFilter{
 			ConfigPatches: []*networking.EnvoyFilter_EnvoyConfigObjectPatch{
@@ -70,7 +70,7 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(m *v1.RateLimiter) *v1alpha3.Env
 					Match: &networking.EnvoyFilter_EnvoyConfigObjectMatch{
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_Cluster{
 							Cluster: &networking.EnvoyFilter_ClusterMatch{
-								Service: "rate-limit-server." + m.Namespace + ".svc.cluster.local",
+								Service: instance.Name + "." + instance.Namespace + ".svc.cluster.local",
 							},
 						},
 					},
@@ -102,7 +102,7 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(m *v1.RateLimiter) *v1alpha3.Env
 			},
 		},
 	}
-	controllerutil.SetControllerReference(m, envoyFilter, r.scheme)
+	controllerutil.SetControllerReference(instance, envoyFilter, r.scheme)
 	return envoyFilter
 }
 
@@ -134,7 +134,7 @@ var patch2 = `
                   - endpoint:
                       address:
                         socket_address:
-                          address: rate-limit-server.operator-test.svc.cluster.local
+                          address: rate-limit.operator-test.svc.cluster.local
                           port_value: 8081
           name: rate_limit_service
           type: STRICT_DNS

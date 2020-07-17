@@ -33,24 +33,22 @@ func (r *ReconcileRateLimiter) reconcileService(ctx context.Context, instance *v
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildService(m *v1.RateLimiter) *corev1.Service {
+func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Service {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.Name,
-			Namespace: m.Namespace,
+			Name:      instance.Name,
+			Namespace: instance.Namespace,
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{
-				Name:       "grpc-rate-limiter",
-				Protocol:   "TCP",
-				Port:       8081,
-				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: 8081},
+				Name:       instance.Name,
+				Protocol:   corev1.ProtocolTCP,
+				Port:       instance.Spec.ServicePort,
+				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: instance.Spec.ServicePort},
 			}},
-			Selector: map[string]string{
-				"app": "rate-limit-server",
-			},
+			Selector: SelectorsForRateLimiter(instance.Name),
 		},
 	}
-	controllerutil.SetControllerReference(m, service, r.scheme)
+	controllerutil.SetControllerReference(instance, service, r.scheme)
 	return service
 }
