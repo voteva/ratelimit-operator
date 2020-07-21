@@ -1,18 +1,20 @@
 package ratelimiter
-
+/*
 import (
 	"context"
+	"ratelimit-operator/pkg/controller/ratelimiter/envoyfilter_types"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/champly/lib4go/encoding"
+	proto_types "github.com/gogo/protobuf/types"
+	"gopkg.in/yaml.v2"
 	networking "istio.io/api/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"ratelimit-operator/pkg/apis/operators/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"github.com/champly/lib4go/encoding"
-	proto_types "github.com/gogo/protobuf/types"
 )
 
 func (r *ReconcileRateLimiter) reconcileEnvoyFilter(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
@@ -62,7 +64,7 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(instance *v1.RateLimiter) *v1alp
 					},
 					Patch: &networking.EnvoyFilter_Patch{
 						Operation: networking.EnvoyFilter_Patch_INSERT_BEFORE,
-						Value:     getPatch(patch1),
+						Value:     convertYaml2Struct(buildHttpFilterPatch(instance)),
 					},
 				},
 				{
@@ -76,7 +78,7 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(instance *v1.RateLimiter) *v1alp
 					},
 					Patch: &networking.EnvoyFilter_Patch{
 						Operation: networking.EnvoyFilter_Patch_ADD,
-						Value:     getPatch(patch2),
+						Value:     convertYaml2Struct(buildClusterPatch(instance)),
 					},
 				},
 				{
@@ -96,7 +98,7 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(instance *v1.RateLimiter) *v1alp
 					},
 					Patch: &networking.EnvoyFilter_Patch{
 						Operation: networking.EnvoyFilter_Patch_MERGE,
-						Value:     getPatch(patch3),
+						Value:     convertYaml2Struct(buildVirtualHostPatch(instance)),
 					},
 				},
 			},
@@ -106,44 +108,87 @@ func (r *ReconcileRateLimiter) buildEnvoyFilter(instance *v1.RateLimiter) *v1alp
 	return envoyFilter
 }
 
-func getPatch(str string) *proto_types.Struct {
+func convertYaml2Struct(str string) *proto_types.Struct {
 	res, _ := encoding.YAML2Struct(str)
 	return res
 }
 
-var patch1 = `
-          config:
-            domain: test
-            failure_mode_deny: true
-            rate_limit_service:
-              grpc_service:
-                envoy_grpc:
-                  cluster_name: rate_limit_service
-                timeout: 10s
-          name: envoy.rate_limit
-`
+func buildHttpFilterPatch(instance *v1.RateLimiter) string {
+	values := envoyfilter_types.HttpFilterPatchValues{
+		Name: "envoy.rate_limit",
+		Config: envoyfilter_types.Config{
+			Domain:          instance.Spec.RateLimitProperty.Domain,
+			FailureModeDeny: instance.Spec.FailureModeDeny,
+			RateLimitService: envoyfilter_types.RateLimitService{
+				GrpcService: envoyfilter_types.GrpcService{
+					Timeout: "10s", // TODO
+					EnvoyGrpc: envoyfilter_types.EnvoyGrpc{
+						ClusterName: "rate_limit_service",
+					},
+				},
+			},
+		},
+	}
 
-var patch2 = `
-          connect_timeout: 10s
-          http2_protocol_options: {}
-          lb_policy: ROUND_ROBIN
-          load_assignment:
-            cluster_name: rate_limit_service
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: rate-limit.operator-test.svc.cluster.local
-                          port_value: 8081
-          name: rate_limit_service
-          type: STRICT_DNS
-`
+	res, err := yaml.Marshal(&values)
+	if err != nil {
+		log.Error(err, "Failed to convert object to yaml for http filter patch")
+	}
+	return string(res)
+}
 
-var patch3 = `
-          rate_limits:
-            - actions:
-                - request_headers:
-                    descriptor_key: custom-rl-header
-                    header_name: custom-rl-header
-`
+func buildClusterPatch(instance *v1.RateLimiter) string {
+	values := envoyfilter_types.ClusterPatchValues{
+		ConnectTimeout:       "10s", // TODO
+		Http2ProtocolOptions: envoyfilter_types.Http2ProtocolOption{},
+		LbPolicy:             "ROUND_ROBIN", // TODO
+		LoadAssignment: envoyfilter_types.LoadAssignment{
+			ClusterName: "rate_limit_service",
+			Endpoints: []envoyfilter_types.LoadAssignmentEndpoints{{
+				LbEndpoints: []envoyfilter_types.LbEndpoint{{
+					Endpoint: envoyfilter_types.Endpoint{
+						Address: envoyfilter_types.Address{
+							SocketAddress: envoyfilter_types.SocketAddress{
+								Address:   "rate-limit.operator-test.svc.cluster.local",
+								PortValue: instance.Spec.ServicePort,
+							},
+						},
+					},
+				}},
+			}},
+		},
+		Name: "rate_limit_service",
+		Type: "STRICT_DNS",
+	}
+
+	res, err := yaml.Marshal(&values)
+	if err != nil {
+		log.Error(err, "Failed to convert object to yaml for cluster patch")
+	}
+	return string(res)
+}
+
+func buildVirtualHostPatch(instance *v1.RateLimiter) string {
+	var actions []envoyfilter_types.Action
+
+	for _, d := range instance.Spec.RateLimitProperty.Descriptors {
+		actions = append(actions,
+			envoyfilter_types.Action{
+				RequestHeaders: envoyfilter_types.RequestHeader{
+					DescriptorKey: d.Key,
+					HeaderName:    d.Key,
+				},
+			},
+		)
+	}
+
+	rateLimits := []envoyfilter_types.RateLimit{{Actions: actions}}
+	values := envoyfilter_types.VirtualHostPatchValues{RateLimits: rateLimits}
+
+	res, err := yaml.Marshal(&values)
+	if err != nil {
+		log.Error(err, "Failed to convert object to yaml for virtual host patch")
+	}
+	return string(res)
+}
+*/

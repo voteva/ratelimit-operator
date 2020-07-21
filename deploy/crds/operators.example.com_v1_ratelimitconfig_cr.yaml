@@ -1,0 +1,15 @@
+apiVersion: operators.example.com/v1
+kind: RateLimitConfig
+metadata:
+  name: ratelimit-config
+spec:
+  rateLimiter: "ratelimit-service"
+  failureModeDeny: true
+  rateLimitProperty:
+    domain: test
+    descriptors:
+      - key: custom-rl-header
+        value: setting1
+        rate_limit:
+          unit: minute
+          requests_per_unit: 1

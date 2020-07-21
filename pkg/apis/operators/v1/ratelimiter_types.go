@@ -4,28 +4,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type RateLimit struct {
-	Unit            string `json:"unit"`
-	RequestsPerUnit int32  `json:"requests_per_unit"`
-}
-
-type Descriptor struct {
-	Key       string    `json:"key"`
-	Value     string    `json:"value,omitempty"`
-	RateLimit RateLimit `json:"rate_limit,omitempty"`
-	Descriptors []Descriptor `json:"descriptors,omitempty"`
-}
-
-type RateLimitProperty struct {
-	Domain      string       `json:"domain"`
-	Descriptors []Descriptor `json:"descriptors"`
-}
-
 // RateLimiterSpec defines the desired state of RateLimiter
 type RateLimiterSpec struct {
-	Size              int32             `json:"size"`
-	ServicePort       int32             `json:"servicePort"`
-	RateLimitProperty RateLimitProperty `json:"rateLimitProperty"`
+	Size        int32  `json:"size,omitempty"`
+	ServicePort int32  `json:"servicePort,omitempty"`
+	Image       string `json:"image,omitempty"`
+	RedisUrl    string `json:"redisUrl,omitempty"`
 }
 
 // RateLimiterStatus defines the observed state of RateLimiter

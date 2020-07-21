@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"ratelimit-operator/pkg/apis/operators/v1"
+	v1 "ratelimit-operator/pkg/apis/operators/v1"
 )
 
 func init() {

@@ -31,49 +31,16 @@ spec:
           spec:
             description: RateLimiterSpec defines the desired state of RateLimiter
             properties:
-              rateLimitProperty:
-                properties:
-                  descriptors:
-                    items:
-                      properties:
-                        descriptors:
-                          items: {}
-                          type: array
-                        key:
-                          type: string
-                        rate_limit:
-                          properties:
-                            requests_per_unit:
-                              format: int32
-                              type: integer
-                            unit:
-                              type: string
-                          required:
-                          - requests_per_unit
-                          - unit
-                          type: object
-                        value:
-                          type: string
-                      required:
-                      - key
-                      type: object
-                    type: array
-                  domain:
-                    type: string
-                required:
-                - descriptors
-                - domain
-                type: object
+              image:
+                type: string
+              redisUrl:
+                type: string
               servicePort:
                 format: int32
                 type: integer
               size:
                 format: int32
                 type: integer
-            required:
-            - rateLimitProperty
-            - servicePort
-            - size
             type: object
           status:
             description: RateLimiterStatus defines the observed state of RateLimiter

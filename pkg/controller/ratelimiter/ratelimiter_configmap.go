@@ -10,7 +10,6 @@ import (
 	"ratelimit-operator/pkg/apis/operators/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"gopkg.in/yaml.v2"
 )
 
 func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
@@ -46,17 +45,18 @@ func (r *ReconcileRateLimiter) buildConfigMap(instance *v1.RateLimiter) *corev1.
 			"RUNTIME_ROOT":         "/data/ratelimit",
 			"RUNTIME_SUBDIRECTORY": "config",
 			"USE_STATSD":           "false",
-			"rate_limit.property":  r.buildRateLimitPropertyValue(instance),
+			"rate_limit.property":  "", // TODO delete
+			//"rate_limit.property":  r.buildRateLimitPropertyValue(instance),
 		},
 	}
 	controllerutil.SetControllerReference(instance, configMap, r.scheme)
 	return configMap
 }
 
-func (r *ReconcileRateLimiter) buildRateLimitPropertyValue(instance *v1.RateLimiter) string {
-	res, err := yaml.Marshal(&instance.Spec.RateLimitProperty)
-	if err != nil {
-		log.Error(err, "Failed to convert object to yaml")
-	}
-	return string(res)
-}
+//func (r *ReconcileRateLimiter) buildRateLimitPropertyValue(instance *v1.RateLimiter) string {
+//	res, err := yaml.Marshal(&instance.Spec.RateLimitProperty)
+//	if err != nil {
+//		log.Error(err, "Failed to convert object to yaml")
+//	}
+//	return string(res)
+//}

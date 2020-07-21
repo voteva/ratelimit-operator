@@ -3,7 +3,6 @@ package ratelimiter
 import (
 	"context"
 
-	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	appsv1 "k8s.io/api/apps/v1"
 	"ratelimit-operator/pkg/apis/operators/v1"
 
@@ -21,8 +20,6 @@ import (
 
 var log = logf.Log.WithName("controller_ratelimiter")
 
-// Add creates a new RateLimiter Controller and adds it to the Manager. The Manager will set fields on the Controller
-// and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
@@ -32,7 +29,6 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 }
 
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
 	c, err := controller.New("ratelimiter-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
@@ -72,25 +68,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	log.Info("Watch for changes to v1alpha3.VirtualService")
-	err = c.Watch(&source.Kind{Type: &v1alpha3.VirtualService{}},
-		&handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &v1.RateLimiter{},
-		})
-	if err != nil {
-		return err
-	}
-
-	log.Info("Watch for changes to v1alpha3.EnvoyFilter")
-	err = c.Watch(&source.Kind{Type: &v1alpha3.EnvoyFilter{}},
-		&handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &v1.RateLimiter{},
-		})
-	if err != nil {
-		return err
-	}
+	//log.Info("Watch for changes to v1alpha3.EnvoyFilter")
+	//err = c.Watch(&source.Kind{Type: &v1alpha3.EnvoyFilter{}},
+	//	&handler.EnqueueRequestForOwner{
+	//		IsController: true,
+	//		OwnerType:    &v1.RateLimiter{},
+	//	})
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -98,8 +84,6 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 var _ reconcile.Reconciler = &ReconcileRateLimiter{}
 
 type ReconcileRateLimiter struct {
-	// This client, initialized using mgr.Client() above, is a split client
-	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
 }
@@ -114,19 +98,16 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 	err := r.client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
-	if result, err := r.reconcileDeployment(ctx, instance); err != nil || result.Requeue {
+	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {
 		return result, err
 	}
 
-	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {
+	if result, err := r.reconcileDeployment(ctx, instance); err != nil || result.Requeue {
 		return result, err
 	}
 
@@ -134,13 +115,9 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 		return result, err
 	}
 
-	if result, err := r.reconcileVirtualService(ctx, instance); err != nil || result.Requeue {
-		return result, err
-	}
-
-	if result, err := r.reconcileEnvoyFilter(ctx, instance); err != nil || result.Requeue {
-		return result, err
-	}
+	//if result, err := r.reconcileEnvoyFilter(ctx, instance); err != nil || result.Requeue {
+	//	return result, err
+	//}
 
 	return reconcile.Result{}, nil
 }

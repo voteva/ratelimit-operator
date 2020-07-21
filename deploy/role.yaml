@@ -83,6 +83,7 @@ rules:
   resources:
   - '*'
   - ratelimiters
+  - ratelimitconfigs
   verbs:
   - create
   - delete

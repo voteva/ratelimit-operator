@@ -4,6 +4,8 @@ import (
 	"context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"ratelimit-operator/pkg/constants"
+	"ratelimit-operator/pkg/utils"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +36,8 @@ func (r *ReconcileRateLimiter) reconcileService(ctx context.Context, instance *v
 }
 
 func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Service {
+	servicePort := utils.DefaultIfZero(instance.Spec.ServicePort, constants.DEFAULT_PORT)
+
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name,
@@ -43,8 +47,8 @@ func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Se
 			Ports: []corev1.ServicePort{{
 				Name:       instance.Name,
 				Protocol:   corev1.ProtocolTCP,
-				Port:       instance.Spec.ServicePort,
-				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: instance.Spec.ServicePort},
+				Port:       servicePort,
+				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: servicePort},
 			}},
 			Selector: SelectorsForRateLimiter(instance.Name),
 		},

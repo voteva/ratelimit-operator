@@ -2,6 +2,8 @@ package ratelimiter
 
 import (
 	"context"
+	"ratelimit-operator/pkg/constants"
+	"ratelimit-operator/pkg/utils"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -87,14 +89,14 @@ func (r *ReconcileRateLimiter) buildDeployment(instance *v1.RateLimiter) *appsv1
 						},
 						{
 							Name:  instance.Name,
-							Image: "evil26r/service_rite_limit",
+							Image: utils.DefaultIfEmpty(instance.Spec.Image, constants.DEFAULT_IMAGE),
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8080,
 									Protocol:      corev1.ProtocolTCP,
 								},
 								{
-									ContainerPort: instance.Spec.ServicePort,
+									ContainerPort: utils.DefaultIfZero(instance.Spec.ServicePort, constants.DEFAULT_PORT),
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
