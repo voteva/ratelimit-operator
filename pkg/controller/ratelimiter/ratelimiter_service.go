@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *ReconcileRateLimiter) reconcileService(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
+func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
 	foundService := &corev1.Service{}
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)

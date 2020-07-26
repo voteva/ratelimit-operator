@@ -3,7 +3,7 @@ kind: RateLimitConfig
 metadata:
   name: ratelimit-config
 spec:
-  rateLimiter: "ratelimit-service"
+  rateLimiter: "ratelimit"
   failureModeDeny: true
   rateLimitProperty:
     domain: test

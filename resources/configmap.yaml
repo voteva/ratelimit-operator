@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: rate-limit-server-config
 data:
-  LOG_LEVEL: DEBUG # вынести (optional)
+  LOG_LEVEL: DEBUG
   REDIS_SOCKET_TYPE: tcp
   REDIS_URL: 'localhost:6379'
   RUNTIME_ROOT: /data/ratelimit

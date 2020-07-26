@@ -6,7 +6,6 @@ import (
 
 // RateLimiterSpec defines the desired state of RateLimiter
 type RateLimiterSpec struct {
-	Size        int32  `json:"size,omitempty"`
 	ServicePort int32  `json:"servicePort,omitempty"`
 	Image       string `json:"image,omitempty"`
 	RedisUrl    string `json:"redisUrl,omitempty"`

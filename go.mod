@@ -7,6 +7,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.9.4 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.8.3 // indirect
 	github.com/champly/lib4go v0.0.0-20200508051201-2cb0f4ccb079
+	github.com/ghodss/yaml v1.0.0
 	github.com/gogo/protobuf v1.3.1
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/operator-framework/operator-sdk v0.18.2

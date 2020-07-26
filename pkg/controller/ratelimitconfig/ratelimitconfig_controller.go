@@ -2,6 +2,7 @@ package ratelimitconfig
 
 import (
 	"context"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	operatorsv1 "ratelimit-operator/pkg/apis/operators/v1"
 
@@ -47,6 +48,7 @@ type ReconcileRateLimitConfig struct {
 	client      client.Client
 	scheme      *runtime.Scheme
 	rateLimiter *v1.RateLimiter
+	configMap   *corev1.ConfigMap
 }
 
 func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -70,7 +72,15 @@ func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	reqLogger.Info("Success")
+	err = r.getRateLimiterConfigMap(ctx, instance)
+	if err != nil {
+		reqLogger.Error(err, "Get RateLimiter ConfigMap [%s/%s] error", instance.Spec.RateLimiter, instance.Namespace)
+		return reconcile.Result{}, err
+	}
+
+	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {
+		return result, err
+	}
 
 	return reconcile.Result{}, nil
 }
@@ -80,8 +90,8 @@ func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance 
 	err := r.client.Get(
 		ctx,
 		types.NamespacedName{
-			Namespace: instance.Namespace,
 			Name:      instance.Spec.RateLimiter,
+			Namespace: instance.Namespace,
 		},
 		rateLimiter,
 	)
@@ -89,5 +99,22 @@ func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance 
 		return err
 	}
 	r.rateLimiter = rateLimiter
+	return nil
+}
+
+func (r *ReconcileRateLimitConfig) getRateLimiterConfigMap(ctx context.Context, instance *operatorsv1.RateLimitConfig) error {
+	configMap := &corev1.ConfigMap{}
+	err := r.client.Get(
+		ctx,
+		types.NamespacedName{
+			Name:      instance.Spec.RateLimiter,
+			Namespace: instance.Namespace,
+		},
+		configMap,
+	)
+	if err != nil {
+		return err
+	}
+	r.configMap = configMap
 	return nil
 }

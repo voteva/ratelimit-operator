@@ -3,6 +3,6 @@ kind: RateLimiter
 metadata:
   name: ratelimit-service
 spec:
-  size: 1
   servicePort: 8081
   image: "evil26r/service_rite_limit"
+  #redisUrl: "ratelimit-service-redis:6379" #опционально
