@@ -4,6 +4,9 @@ metadata:
   name: filter-ratelimit
   namespace: istio-system
 spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
   configPatches:
     - applyTo: HTTP_FILTER
       match:

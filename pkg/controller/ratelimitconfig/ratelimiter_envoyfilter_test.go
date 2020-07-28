@@ -1,11 +1,11 @@
-package ratelimiter
-
-import (
-	//"github.com/stretchr/testify/assert"
-	//v1 "ratelimit-operator/pkg/apis/operators/v1"
-	//"testing"
-)
+package ratelimitconfig
 /*
+import (
+	"github.com/stretchr/testify/assert"
+	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"testing"
+)
+
 func Test_HttpFilterPatch_Success(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
@@ -24,13 +24,12 @@ func Test_HttpFilterPatch_Success(t *testing.T) {
 
 		expectedPatch := convertYaml2Struct(strPatch)
 
-		instance := v1.RateLimiter{
-			Spec: v1.RateLimiterSpec{
+		instance := v1.RateLimitConfig{
+			Spec: v1.RateLimitConfigSpec{
 				RateLimitProperty: v1.RateLimitProperty{
 					Domain: "test",
 				},
 				FailureModeDeny: true,
-				Timeout:         "10s",
 			},
 		}
 

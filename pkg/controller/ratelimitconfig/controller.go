@@ -82,6 +82,10 @@ func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconci
 		return result, err
 	}
 
+	if result, err := r.reconcileEnvoyFilter(ctx, instance); err != nil || result.Requeue {
+		return result, err
+	}
+
 	return reconcile.Result{}, nil
 }
 

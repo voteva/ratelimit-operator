@@ -3,8 +3,9 @@ kind: RateLimitConfig
 metadata:
   name: ratelimit-config
 spec:
-  rateLimiter: "ratelimit"
+  rateLimiter: "rate-limiter"
   failureModeDeny: true
+  virtualHostName: "host-info-service.org:80"
   rateLimitProperty:
     domain: test
     descriptors:

@@ -31,6 +31,7 @@ type RateLimitConfigSpec struct {
 	RateLimiter       string            `json:"rateLimiter"`
 	RateLimitProperty RateLimitProperty `json:"rateLimitProperty,omitempty"`
 	FailureModeDeny   bool              `json:"failureModeDeny,omitempty"`
+	VirtualHostName   string            `json:"virtualHostName,omitempty"`
 }
 
 type RateLimitConfigStatus struct {

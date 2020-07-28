@@ -9,7 +9,13 @@ import (
 
 func (r *ReconcileRateLimitConfig) reconcileConfigMap(ctx context.Context, instance *operatorsv1.RateLimitConfig) (reconcile.Result, error) {
 	data := r.configMap.Data
-	data[instance.Name + ".yaml"] = r.buildRateLimitPropertyValue(instance)
+	if data == nil {
+		data = make(map[string]string)
+	}
+
+	// TODO check domain not exists
+
+	data[instance.Name+".yaml"] = r.buildRateLimitPropertyValue(instance)
 
 	r.configMap.Data = data
 

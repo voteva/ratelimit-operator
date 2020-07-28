@@ -38,16 +38,7 @@ func (r *ReconcileRateLimiter) buildConfigMap(instance *v1.RateLimiter) *corev1.
 			Name:      instance.Name,
 			Namespace: instance.Namespace,
 		},
-		Data: map[string]string{
-			//"LOG_LEVEL":            "DEBUG",
-			//"REDIS_SOCKET_TYPE":    "tcp",
-			//"REDIS_URL":            "localhost:6379",
-			//"RUNTIME_ROOT":         "/data/ratelimit",
-			//"RUNTIME_SUBDIRECTORY": "config",
-			//"USE_STATSD":           "false",
-			"rate_limit.yaml":  "", // TODO delete
-			//"rate_limit.property":  r.buildRateLimitPropertyValue(instance),
-		},
+		Data: map[string]string{},
 	}
 	controllerutil.SetControllerReference(instance, configMap, r.scheme)
 	return configMap

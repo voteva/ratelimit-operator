@@ -119,7 +119,7 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 							},
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
-								MountPath: "/home/user/src/runtime/data/config",
+								MountPath: "/home/user/src/runtime/data/ratelimit",
 							}},
 							TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 							EnvFrom: []corev1.EnvFromSource{{

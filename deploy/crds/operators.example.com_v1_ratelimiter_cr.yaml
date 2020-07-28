@@ -1,8 +1,8 @@
 apiVersion: operators.example.com/v1
 kind: RateLimiter
 metadata:
-  name: ratelimit-service
+  name: rate-limiter
 spec:
   servicePort: 8081
   image: "evil26r/service_rite_limit"
-  #redisUrl: "ratelimit-service-redis:6379" #опционально
+  #redisUrl: "rate-limiter-redis:6379" #опционально

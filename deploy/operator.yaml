@@ -16,7 +16,7 @@ spec:
       containers:
         - name: ratelimit-operator
           # Replace this with the built image name
-          image: tanyavoteva/ratelimit-operator:v0.0.1
+          image: voteva/ratelimit-operator:v0.0.1
           command:
           - ratelimit-operator
           imagePullPolicy: Always
