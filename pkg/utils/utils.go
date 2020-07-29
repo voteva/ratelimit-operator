@@ -1,15 +1,15 @@
 package utils
 
 func DefaultIfEmpty(value string, defaultValue string) string {
-	if len(value) > 0 {
-		return value
+	if len(value) == 0 {
+		return defaultValue
 	}
-	return defaultValue
+	return value
 }
 
-func DefaultIfZero(value int32, defaultValue int32) int32 {
-	if value > 0 {
-		return value
+func DefaultIfAbsent(value *int32, defaultValue int32) int32 {
+	if value == nil {
+		return defaultValue
 	}
-	return defaultValue
+	return *value
 }

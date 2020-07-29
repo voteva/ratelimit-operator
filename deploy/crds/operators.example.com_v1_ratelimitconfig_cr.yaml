@@ -4,10 +4,10 @@ metadata:
   name: ratelimit-config
 spec:
   rateLimiter: "rate-limiter"
-  failureModeDeny: true
-  virtualHostName: "host-info-service.org:80"
+  failureModeDeny: false #optional
+  virtualHostName: "host-info-srv.org:80"
   rateLimitProperty:
-    domain: test
+    domain: host-info
     descriptors:
       - key: custom-rl-header
         value: setting1

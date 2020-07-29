@@ -89,6 +89,7 @@ spec:
                 type: string
             required:
             - rateLimiter
+            - virtualHostName
             type: object
           status:
             type: object

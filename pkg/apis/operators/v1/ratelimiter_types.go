@@ -4,11 +4,27 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type LogLevel string
+
+const (
+	// Log level INFO.
+	INFO LogLevel = "INFO"
+	// Log level DEBUG.
+	DEBUG LogLevel = "DEBUG"
+	// Log level ERROR.
+	ERROR LogLevel = "ERROR"
+)
+
+type Redis struct {
+	Image *string `json:"image,omitempty"`
+}
+
 // RateLimiterSpec defines the desired state of RateLimiter
 type RateLimiterSpec struct {
-	ServicePort int32  `json:"servicePort,omitempty"`
-	Image       string `json:"image,omitempty"`
-	RedisUrl    string `json:"redisUrl,omitempty"`
+	Image    string    `json:"image"`
+	Port     *int32    `json:"port,omitempty"`
+	LogLevel *LogLevel `json:"logLevel,omitempty"`
+	Redis    *Redis    `json:"redis,omitempty"`
 }
 
 // RateLimiterStatus defines the observed state of RateLimiter

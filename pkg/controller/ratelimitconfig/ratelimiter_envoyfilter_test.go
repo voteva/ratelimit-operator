@@ -65,7 +65,7 @@ func Test_ClusterPatch_Success(t *testing.T) {
 
 		instance := v1.RateLimiter{
 			Spec: v1.RateLimiterSpec{
-				ServicePort: 8081,
+				Port: 8081,
 			},
 		}
 

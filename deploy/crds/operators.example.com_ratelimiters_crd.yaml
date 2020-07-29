@@ -33,11 +33,18 @@ spec:
             properties:
               image:
                 type: string
-              redisUrl:
+              logLevel:
                 type: string
-              servicePort:
+              port:
                 format: int32
                 type: integer
+              redis:
+                properties:
+                  image:
+                    type: string
+                type: object
+            required:
+            - image
             type: object
           status:
             description: RateLimiterStatus defines the observed state of RateLimiter

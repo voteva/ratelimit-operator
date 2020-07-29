@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -35,28 +36,29 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 }
 
 func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter) *appsv1.Deployment {
-	ls := LabelsForRedis(instance.Name)
+	deploymentName := r.buildNameForRedis(instance)
+	labels := utils.LabelsForApp(deploymentName)
 	replicas := int32(1)
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      r.buildNameForRedis(instance),
+			Name:      deploymentName,
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
+				MatchLabels: labels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: ls,
+					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
 							Name:  "redis",
-							Image: "redis:alpine",
+							Image: r.buildRedisImage(instance),
 						},
 					},
 				},
@@ -65,8 +67,4 @@ func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter)
 	}
 	controllerutil.SetControllerReference(instance, dep, r.scheme)
 	return dep
-}
-
-func (r *ReconcileRateLimiter) buildNameForRedis(instance *v1.RateLimiter) string {
-	return instance.Name + "-redis"
 }

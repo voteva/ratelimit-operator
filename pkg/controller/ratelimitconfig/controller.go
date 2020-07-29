@@ -3,11 +3,9 @@ package ratelimitconfig
 import (
 	"context"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	operatorsv1 "ratelimit-operator/pkg/apis/operators/v1"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"ratelimit-operator/pkg/apis/operators/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -34,7 +32,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &operatorsv1.RateLimitConfig{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1.RateLimitConfig{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -57,7 +55,7 @@ func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconci
 
 	ctx := context.TODO()
 
-	instance := &operatorsv1.RateLimitConfig{}
+	instance := &v1.RateLimitConfig{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -89,7 +87,7 @@ func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconci
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance *operatorsv1.RateLimitConfig) error {
+func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance *v1.RateLimitConfig) error {
 	rateLimiter := &v1.RateLimiter{}
 	err := r.client.Get(
 		ctx,
@@ -106,7 +104,7 @@ func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance 
 	return nil
 }
 
-func (r *ReconcileRateLimitConfig) getRateLimiterConfigMap(ctx context.Context, instance *operatorsv1.RateLimitConfig) error {
+func (r *ReconcileRateLimitConfig) getRateLimiterConfigMap(ctx context.Context, instance *v1.RateLimitConfig) error {
 	configMap := &corev1.ConfigMap{}
 	err := r.client.Get(
 		ctx,

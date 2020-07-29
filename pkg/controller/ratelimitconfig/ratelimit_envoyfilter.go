@@ -4,23 +4,23 @@ import (
 	"context"
 	"github.com/champly/lib4go/encoding"
 	"github.com/ghodss/yaml"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	operatorsv1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/controller/ratelimitconfig/envoyfilter_types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	proto_types "github.com/gogo/protobuf/types"
 	networking "istio.io/api/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/constants"
+	"ratelimit-operator/pkg/controller/ratelimitconfig/envoyfilter_types"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *ReconcileRateLimitConfig) reconcileEnvoyFilter(ctx context.Context, instance *operatorsv1.RateLimitConfig) (reconcile.Result, error) {
+func (r *ReconcileRateLimitConfig) reconcileEnvoyFilter(ctx context.Context, instance *v1.RateLimitConfig) (reconcile.Result, error) {
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundEnvoyFilter)
-	log.Info("reconcileEnvoyFilter !!!!!")
+	err := r.client.Get(ctx, types.NamespacedName{Name: buildEnvoyFilterName(instance), Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
 
 	if err != nil && errors.IsNotFound(err) {
 		ef := r.buildEnvoyFilter(instance)
@@ -38,11 +38,11 @@ func (r *ReconcileRateLimitConfig) reconcileEnvoyFilter(ctx context.Context, ins
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimitConfig) buildEnvoyFilter(instance *operatorsv1.RateLimitConfig) *v1alpha3.EnvoyFilter {
+func (r *ReconcileRateLimitConfig) buildEnvoyFilter(instance *v1.RateLimitConfig) *v1alpha3.EnvoyFilter {
 	envoyFilter := &v1alpha3.EnvoyFilter{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name,
-			Namespace: instance.Namespace,
+			Name:      buildEnvoyFilterName(instance),
+			Namespace: constants.ISTIO_SYSTEM,
 		},
 		Spec: networking.EnvoyFilter{
 			WorkloadSelector: &networking.WorkloadSelector{
@@ -78,7 +78,7 @@ func (r *ReconcileRateLimitConfig) buildEnvoyFilter(instance *operatorsv1.RateLi
 					Match: &networking.EnvoyFilter_EnvoyConfigObjectMatch{
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_Cluster{
 							Cluster: &networking.EnvoyFilter_ClusterMatch{
-								Service: r.rateLimiter.Name, //instance.Name + "." + instance.Namespace + ".svc.cluster.local",
+								Service: r.buildRateLimiterServiceFqdn(),
 							},
 						},
 					},
@@ -119,7 +119,7 @@ func convertYaml2Struct(str string) *proto_types.Struct {
 	return res
 }
 
-func (r *ReconcileRateLimitConfig) buildHttpFilterPatch(instance *operatorsv1.RateLimitConfig) string {
+func (r *ReconcileRateLimitConfig) buildHttpFilterPatch(instance *v1.RateLimitConfig) string {
 	values := envoyfilter_types.HttpFilterPatchValues{
 		Name: "envoy.rate_limit",
 		Config: envoyfilter_types.Config{
@@ -143,7 +143,7 @@ func (r *ReconcileRateLimitConfig) buildHttpFilterPatch(instance *operatorsv1.Ra
 	return string(res)
 }
 
-func (r *ReconcileRateLimitConfig) buildClusterPatch(instance *operatorsv1.RateLimitConfig) string {
+func (r *ReconcileRateLimitConfig) buildClusterPatch(instance *v1.RateLimitConfig) string {
 	values := envoyfilter_types.ClusterPatchValues{
 		ConnectTimeout:       "10s", // TODO
 		Http2ProtocolOptions: envoyfilter_types.Http2ProtocolOption{},
@@ -155,8 +155,8 @@ func (r *ReconcileRateLimitConfig) buildClusterPatch(instance *operatorsv1.RateL
 					Endpoint: envoyfilter_types.Endpoint{
 						Address: envoyfilter_types.Address{
 							SocketAddress: envoyfilter_types.SocketAddress{
-								Address:   r.rateLimiter.Name, //"rate-limit.operator-test.svc.cluster.local",
-								PortValue: r.rateLimiter.Spec.ServicePort,
+								Address:   r.buildRateLimiterServiceFqdn(),
+								PortValue: r.buildRateLimiterServicePort(),
 							},
 						},
 					},
@@ -174,7 +174,7 @@ func (r *ReconcileRateLimitConfig) buildClusterPatch(instance *operatorsv1.RateL
 	return string(res)
 }
 
-func (r *ReconcileRateLimitConfig) buildVirtualHostPatch(instance *operatorsv1.RateLimitConfig) string {
+func (r *ReconcileRateLimitConfig) buildVirtualHostPatch(instance *v1.RateLimitConfig) string {
 	var actions []envoyfilter_types.Action
 
 	for _, d := range instance.Spec.RateLimitProperty.Descriptors {
@@ -196,4 +196,8 @@ func (r *ReconcileRateLimitConfig) buildVirtualHostPatch(instance *operatorsv1.R
 		log.Error(err, "Failed to convert object to yaml for virtual host patch")
 	}
 	return string(res)
+}
+
+func buildEnvoyFilterName(instance *v1.RateLimitConfig) string {
+	return instance.Name + "-" + instance.Namespace
 }

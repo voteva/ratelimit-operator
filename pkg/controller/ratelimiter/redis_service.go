@@ -8,6 +8,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/constants"
+	"ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -35,7 +37,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, ins
 
 func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter) *corev1.Service {
 	serviceName := r.buildNameForRedis(instance)
-	servicePort := int32(6379)
+	servicePort := constants.DEFAULT_REDIS_PORT
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -49,7 +51,7 @@ func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter) *c
 				Port:       servicePort,
 				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: servicePort},
 			}},
-			Selector: SelectorsForRedis(instance.Name),
+			Selector: utils.SelectorsForApp(serviceName),
 		},
 	}
 	controllerutil.SetControllerReference(instance, service, r.scheme)

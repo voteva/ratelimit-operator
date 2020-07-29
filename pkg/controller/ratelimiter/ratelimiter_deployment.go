@@ -2,7 +2,6 @@ package ratelimiter
 
 import (
 	"context"
-	"ratelimit-operator/pkg/constants"
 	"ratelimit-operator/pkg/utils"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -37,10 +36,10 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForService(ctx context.Context
 }
 
 func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
-	ls := LabelsForRateLimiter(instance.Name)
-	defaultRedisName := r.buildNameForRedis(instance)
+	labels := utils.LabelsForApp(instance.Name)
+	defaultRedisUrl := r.buildRedisUrl(instance)
 	replicas := int32(2)
-	var defaultMode int32 = 420 // TODO
+	var defaultMode int32 = 420
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -50,12 +49,12 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 		Spec: appsv1.DeploymentSpec{
 			Replicas: &replicas,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: ls,
+				MatchLabels: labels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels:      ls,
-					Annotations: map[string]string{"sidecar.istio.io/inject": "true"},
+					Labels:      labels,
+					Annotations: utils.AnnotationSidecarIstio(),
 				},
 				Spec: corev1.PodSpec{
 					Volumes: []corev1.Volume{{
@@ -71,22 +70,26 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 					}},
 					Containers: []corev1.Container{
 						{
+							Name:  "redis",
+							Image: "redis:alpine",
+						},
+						{
 							Name:  instance.Name,
-							Image: utils.DefaultIfEmpty(instance.Spec.Image, constants.DEFAULT_IMAGE),
+							Image: instance.Spec.Image,
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: 8080,
 									Protocol:      corev1.ProtocolTCP,
 								},
 								{
-									ContainerPort: utils.DefaultIfZero(instance.Spec.ServicePort, constants.DEFAULT_PORT),
+									ContainerPort: r.buildRateLimiterServicePort(instance),
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
 							Env: []corev1.EnvVar{
 								{
 									Name:  "LOG_LEVEL",
-									Value: "DEBUG",
+									Value: utils.DefaultIfEmpty(string(*instance.Spec.LogLevel), string(v1.INFO)),
 								},
 								{
 									Name:  "REDIS_SOCKET_TYPE",
@@ -94,7 +97,7 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 								},
 								{
 									Name:  "REDIS_URL",
-									Value: utils.DefaultIfEmpty(instance.Spec.RedisUrl, defaultRedisName+":6379"),
+									Value: defaultRedisUrl,
 								},
 								{
 									Name:  "RUNTIME_IGNOREDOTFILES",
@@ -119,7 +122,7 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 							},
 							VolumeMounts: []corev1.VolumeMount{{
 								Name:      "config",
-								MountPath: "/home/user/src/runtime/data/ratelimit",
+								MountPath: "/home/user/src/runtime/data/ratelimit/config",
 							}},
 							TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 							EnvFrom: []corev1.EnvFromSource{{

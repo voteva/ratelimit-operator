@@ -3,6 +3,8 @@ kind: RateLimiter
 metadata:
   name: rate-limiter
 spec:
-  servicePort: 8081
   image: "evil26r/service_rite_limit"
-  #redisUrl: "rate-limiter-redis:6379" #опционально
+  port: 8081 #optional
+  logLevel: "INFO" #optional
+  redis:
+    image: "redis:alpine" #optional
