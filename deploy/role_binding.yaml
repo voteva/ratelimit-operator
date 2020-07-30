@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: ratelimit-operator
-  #namespace: operator-test
+  #namespace: operator-test # здесь указать неймспейс
 roleRef:
   kind: ClusterRole
   name: ratelimit-operator

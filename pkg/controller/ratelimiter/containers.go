@@ -1,6 +1,7 @@
 package ratelimiter
 
 import (
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/constants"
@@ -17,7 +18,8 @@ func (r *ReconcileRateLimiter) BuildRedisContainer() corev1.Container {
 }
 
 func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) corev1.Container {
-	defaultRedisUrl := r.buildRedisUrl()
+	defaultRedisUrl := r.buildRedisUrl(instance)
+	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 	return corev1.Container{
 		Name:  instance.Name,
 		Image: constants.RATE_LIMITER_SERVICE_IMAGE,
@@ -44,11 +46,11 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 			},
 			{
 				Name:  "RUNTIME_ROOT",
-				Value: "/home/user/src/runtime/data",
+				Value: constants.RUNTIME_ROOT,
 			},
 			{
 				Name:  "RUNTIME_SUBDIRECTORY",
-				Value: "ratelimit",
+				Value: constants.RUNTIME_SUBDIRECTORY,
 			},
 			{
 				Name:  "RUNTIME_WATCH_ROOT",
@@ -61,7 +63,7 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 		},
 		VolumeMounts: []corev1.VolumeMount{{
 			Name:      "config",
-			MountPath: "/home/user/src/runtime/data/ratelimit/config",
+			MountPath: configMountPath,
 		}},
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 	}

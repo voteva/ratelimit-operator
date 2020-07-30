@@ -10,5 +10,5 @@ func (r *ReconcileRateLimiterConfig) buildRateLimiterServiceFqdn() string {
 }
 
 func (r *ReconcileRateLimiterConfig) buildRateLimiterServicePort() int32 {
-	return utils.DefaultIfAbsent(r.rateLimiter.Spec.Port, constants.DEFAULT_RATELIMITER_PORT)
+	return utils.DefaultIfAbsent(r.rateLimiter.Spec.Port, constants.RATELIMITER_PORT)
 }

@@ -3,6 +3,7 @@ package ratelimiter
 import (
 	"context"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -15,29 +16,38 @@ import (
 )
 
 func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Instance.Name", instance.Name)
+
 	foundService := &corev1.Service{}
 	serviceName := r.buildNameForRedis(instance)
+	serviceFromInstance := r.buildServiceForRedis(instance, serviceName)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: instance.Namespace}, foundService)
-	if err != nil && errors.IsNotFound(err) {
-		srv := r.buildServiceForRedis(instance)
-		log.Info("Creating a new Service Redis", "Service.Namespace", srv.Namespace, "Service.Name", srv.Name)
-		err = r.client.Create(ctx, srv)
-		if err != nil {
-			log.Error(err, "Failed to create new Service Redis", "Service.Namespace", srv.Namespace, "Service.Name", srv.Name)
-			return reconcile.Result{}, err
+	if err != nil {
+		if errors.IsNotFound(err) {
+			reqLogger.Info("Creating a new Service Redis")
+			err = r.client.Create(ctx, serviceFromInstance)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new Service Redis")
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
 		}
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Service Redis")
+	} else {
+		reqLogger.Error(err, "Failed to get Service Redis")
 		return reconcile.Result{}, err
 	}
+
+	if !equality.Semantic.DeepEqual(foundService.Spec, serviceFromInstance.Spec) {
+		foundService.Spec = serviceFromInstance.Spec
+		r.client.Update(ctx, foundService)
+	}
+
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter) *corev1.Service {
-	serviceName := r.buildNameForRedis(instance)
-	servicePort := constants.DEFAULT_REDIS_PORT
+func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter, serviceName string) *corev1.Service {
+	servicePort := constants.REDIS_PORT
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{

@@ -4,6 +4,7 @@ import (
 	"context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -14,29 +15,37 @@ import (
 )
 
 func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Instance.Name", instance.Name)
+
 	foundDeployment := &appsv1.Deployment{}
 	deploymentName := r.buildNameForRedis(instance)
+	deploymentFromInstance := r.buildDeploymentForRedis(instance, deploymentName)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: instance.Namespace}, foundDeployment)
-	if err != nil && errors.IsNotFound(err) {
-		dep := r.buildDeploymentForRedis(instance)
-		log.Info("Creating a new Deployment Redis", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
-		err = r.client.Create(ctx, dep)
-		if err != nil {
-			log.Error(err, "Failed to create new Deployment Redis", "Deployment.Namespace", dep.Namespace, "Deployment.Name", dep.Name)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			reqLogger.Info("Creating a new Deployment Redis")
+			err = r.client.Create(ctx, deploymentFromInstance)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new Deployment Redis")
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		} else if err != nil {
+			reqLogger.Error(err, "Failed to get Deployment Redis")
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Deployment Redis")
-		return reconcile.Result{}, err
+	}
+
+	if !equality.Semantic.DeepEqual(foundDeployment.Spec, deploymentFromInstance.Spec) {
+		foundDeployment.Spec = deploymentFromInstance.Spec
+		r.client.Update(ctx, foundDeployment)
 	}
 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter) *appsv1.Deployment {
-	deploymentName := r.buildNameForRedis(instance)
+func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter, deploymentName string) *appsv1.Deployment {
 	labels := utils.LabelsForApp(deploymentName)
 	replicas := int32(1)
 

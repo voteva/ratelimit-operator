@@ -90,6 +90,14 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 		return result, err
 	}
 
+	if result, err := r.reconcileDeploymentForRedis(ctx, instance); err != nil || result.Requeue {
+		return result, err
+	}
+
+	if result, err := r.reconcileServiceForRedis(ctx, instance); err != nil || result.Requeue {
+		return result, err
+	}
+
 	if result, err := r.reconcileDeploymentForService(ctx, instance); err != nil || result.Requeue {
 		return result, err
 	}

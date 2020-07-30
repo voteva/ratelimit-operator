@@ -78,7 +78,7 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 						},
 					}},
 					Containers: []corev1.Container{
-						r.BuildRedisContainer(),
+						//r.BuildRedisContainer(),
 						r.BuildServiceContainer(instance),
 					},
 				},
