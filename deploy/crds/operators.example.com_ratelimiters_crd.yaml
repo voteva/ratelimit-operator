@@ -31,20 +31,11 @@ spec:
           spec:
             description: RateLimiterSpec defines the desired state of RateLimiter
             properties:
-              image:
-                type: string
               logLevel:
                 type: string
               port:
                 format: int32
                 type: integer
-              redis:
-                properties:
-                  image:
-                    type: string
-                type: object
-            required:
-            - image
             type: object
           status:
             description: RateLimiterStatus defines the observed state of RateLimiter

@@ -15,16 +15,10 @@ const (
 	ERROR LogLevel = "ERROR"
 )
 
-type Redis struct {
-	Image *string `json:"image,omitempty"`
-}
-
 // RateLimiterSpec defines the desired state of RateLimiter
 type RateLimiterSpec struct {
-	Image    string    `json:"image"`
 	Port     *int32    `json:"port,omitempty"`
 	LogLevel *LogLevel `json:"logLevel,omitempty"`
-	Redis    *Redis    `json:"redis,omitempty"`
 }
 
 // RateLimiterStatus defines the observed state of RateLimiter

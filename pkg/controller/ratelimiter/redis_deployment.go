@@ -56,10 +56,7 @@ func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter)
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						{
-							Name:  "redis",
-							Image: r.buildRedisImage(instance),
-						},
+						r.BuildRedisContainer(),
 					},
 				},
 			},

@@ -3,6 +3,7 @@ package ratelimiter
 import (
 	"context"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -14,22 +15,32 @@ import (
 )
 
 func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Instance.Name", instance.Name)
+
 	foundService := &corev1.Service{}
+	serviceFromInstance := r.buildService(instance)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)
-	if err != nil && errors.IsNotFound(err) {
-		srv := r.buildService(instance)
-		log.Info("Creating a new Service", "Service.Namespace", srv.Namespace, "Service.Name", srv.Name)
-		err = r.client.Create(ctx, srv)
-		if err != nil {
-			log.Error(err, "Failed to create new Service", "Service.Namespace", srv.Namespace, "Service.Name", srv.Name)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			reqLogger.Info("Creating a new Service")
+			err = r.client.Create(ctx, serviceFromInstance)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new Service")
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		} else {
+			reqLogger.Error(err, "Failed to get Service")
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get Service")
-		return reconcile.Result{}, err
 	}
+
+	if !equality.Semantic.DeepEqual(foundService.Spec, serviceFromInstance.Spec) {
+		foundService.Spec = serviceFromInstance.Spec
+		r.client.Update(ctx, foundService)
+	}
+
 	return reconcile.Result{}, nil
 }
 

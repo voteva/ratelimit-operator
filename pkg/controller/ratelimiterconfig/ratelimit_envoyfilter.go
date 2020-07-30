@@ -43,8 +43,10 @@ func (r *ReconcileRateLimiterConfig) reconcileEnvoyFilter(ctx context.Context, i
 
 func (r *ReconcileRateLimiterConfig) deleteEnvoyFilter(ctx context.Context, instance *v1.RateLimiterConfig) error {
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
+	envoyFilterName := buildEnvoyFilterName(instance)
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: buildEnvoyFilterName(instance), Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
+	err := r.client.Get(ctx, types.NamespacedName{Name: envoyFilterName, Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
+	log.Error(err, "FINALIZE EnvoyFilter")
 
 	if err != nil && errors.IsNotFound(err) {
 		return nil

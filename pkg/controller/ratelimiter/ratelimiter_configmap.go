@@ -12,21 +12,25 @@ import (
 )
 
 func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance *v1.RateLimiter) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Instance.Name", instance.Name)
+
 	foundConfigMap := &corev1.ConfigMap{}
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundConfigMap)
-	if err != nil && errors.IsNotFound(err) {
-		cm := r.buildConfigMap(instance)
-		log.Info("Creating a new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
-		err = r.client.Create(ctx, cm)
-		if err != nil {
-			log.Error(err, "Failed to create new ConfigMap", "ConfigMap.Namespace", cm.Namespace, "ConfigMap.Name", cm.Name)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			configMapFromInstance := r.buildConfigMap(instance)
+			reqLogger.Info("Creating a new ConfigMap")
+			err = r.client.Create(ctx, configMapFromInstance)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new ConfigMap")
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		} else {
+			reqLogger.Error(err, "Failed to get ConfigMap")
 			return reconcile.Result{}, err
 		}
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get ConfigMap")
-		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
