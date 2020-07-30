@@ -27,38 +27,38 @@ type RateLimitProperty struct {
 	Descriptors []Descriptor `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
 }
 
-type RateLimitConfigSpec struct {
+type RateLimiterConfigSpec struct {
 	VirtualHostName   string            `json:"virtualHostName"`
 	RateLimiter       string            `json:"rateLimiter"`
 	RateLimitProperty RateLimitProperty `json:"rateLimitProperty,omitempty"`
 	FailureModeDeny   bool              `json:"failureModeDeny,omitempty"`
 }
 
-type RateLimitConfigStatus struct {
+type RateLimiterConfigStatus struct {
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// RateLimitConfig is the Schema for the ratelimitconfigs API
+// RateLimiterConfig is the Schema for the ratelimiterconfigs API
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=ratelimitconfigs,scope=Namespaced
-type RateLimitConfig struct {
+// +kubebuilder:resource:path=ratelimiterconfigs,scope=Namespaced
+type RateLimiterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   RateLimitConfigSpec   `json:"spec,omitempty"`
-	Status RateLimitConfigStatus `json:"status,omitempty"`
+	Spec   RateLimiterConfigSpec   `json:"spec,omitempty"`
+	Status RateLimiterConfigStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// RateLimitConfigList contains a list of RateLimitConfig
-type RateLimitConfigList struct {
+// RateLimiterConfigList contains a list of RateLimiterConfig
+type RateLimiterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []RateLimitConfig `json:"items"`
+	Items           []RateLimiterConfig `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&RateLimitConfig{}, &RateLimitConfigList{})
+	SchemeBuilder.Register(&RateLimiterConfig{}, &RateLimiterConfigList{})
 }

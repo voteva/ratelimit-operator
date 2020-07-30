@@ -1,14 +1,14 @@
-package ratelimitconfig
+package ratelimiterconfig
 
 import (
 	"ratelimit-operator/pkg/constants"
 	"ratelimit-operator/pkg/utils"
 )
 
-func (r *ReconcileRateLimitConfig) buildRateLimiterServiceFqdn() string {
+func (r *ReconcileRateLimiterConfig) buildRateLimiterServiceFqdn() string {
 	return r.rateLimiter.Name + "." + r.rateLimiter.Namespace + ".svc.cluster.local"
 }
 
-func (r *ReconcileRateLimitConfig) buildRateLimiterServicePort() int32 {
+func (r *ReconcileRateLimiterConfig) buildRateLimiterServicePort() int32 {
 	return utils.DefaultIfAbsent(r.rateLimiter.Spec.Port, constants.DEFAULT_RATELIMITER_PORT)
 }

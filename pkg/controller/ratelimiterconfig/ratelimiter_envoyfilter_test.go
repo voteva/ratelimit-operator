@@ -1,4 +1,4 @@
-package ratelimitconfig
+package ratelimiterconfig
 /*
 import (
 	"github.com/stretchr/testify/assert"

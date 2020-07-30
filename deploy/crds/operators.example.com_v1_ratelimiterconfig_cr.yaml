@@ -1,10 +1,11 @@
 apiVersion: operators.example.com/v1
-kind: RateLimitConfig
+kind: RateLimiterConfig
 metadata:
   name: host-info-srv-config
+  namespace: operator-test
 spec:
   rateLimiter: "rate-limiter"
-  failureModeDeny: false #optional
+  failureModeDeny: false
   virtualHostName: "host-info-srv.org:80"
   rateLimitProperty:
     domain: host-info

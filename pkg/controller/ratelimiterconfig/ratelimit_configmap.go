@@ -1,4 +1,4 @@
-package ratelimitconfig
+package ratelimiterconfig
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *ReconcileRateLimitConfig) updateConfigMap(ctx context.Context, instance *v1.RateLimitConfig) (reconcile.Result, error) {
+func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instance *v1.RateLimiterConfig) (reconcile.Result, error) {
 	data := r.configMap.Data
 	if data == nil {
 		data = make(map[string]string)
@@ -36,7 +36,7 @@ func (r *ReconcileRateLimitConfig) updateConfigMap(ctx context.Context, instance
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimitConfig) deleteFromConfigMap(ctx context.Context, instance *v1.RateLimitConfig) error {
+func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, instance *v1.RateLimiterConfig) error {
 	data := r.configMap.Data
 	if data == nil {
 		return nil
@@ -55,7 +55,7 @@ func (r *ReconcileRateLimitConfig) deleteFromConfigMap(ctx context.Context, inst
 	return nil
 }
 
-func (r *ReconcileRateLimitConfig) buildRateLimitPropertyValue(instance *v1.RateLimitConfig) string {
+func (r *ReconcileRateLimiterConfig) buildRateLimitPropertyValue(instance *v1.RateLimiterConfig) string {
 	res, err := yaml.Marshal(&instance.Spec.RateLimitProperty)
 	if err != nil {
 		log.Error(err, "Failed to convert object to yaml")
@@ -63,7 +63,7 @@ func (r *ReconcileRateLimitConfig) buildRateLimitPropertyValue(instance *v1.Rate
 	return string(res)
 }
 
-func (r *ReconcileRateLimitConfig) unmarshalRateLimitPropertyValue(data string) v1.RateLimitProperty {
+func (r *ReconcileRateLimiterConfig) unmarshalRateLimitPropertyValue(data string) v1.RateLimitProperty {
 	props := v1.RateLimitProperty{}
 	err := yaml.Unmarshal([]byte(data), &props)
 	if err != nil {

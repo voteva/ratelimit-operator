@@ -1,4 +1,4 @@
-package ratelimitconfig
+package ratelimiterconfig
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var controllerName = "controller_ratelimitconfig"
+var controllerName = "controller_ratelimiter_config"
 var log = logf.Log.WithName(controllerName)
 
 func Add(mgr manager.Manager) error {
@@ -25,7 +25,7 @@ func Add(mgr manager.Manager) error {
 }
 
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileRateLimitConfig{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileRateLimiterConfig{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
@@ -34,7 +34,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1.RateLimitConfig{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &v1.RateLimiterConfig{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
@@ -42,20 +42,20 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-var _ reconcile.Reconciler = &ReconcileRateLimitConfig{}
+var _ reconcile.Reconciler = &ReconcileRateLimiterConfig{}
 
-type ReconcileRateLimitConfig struct {
+type ReconcileRateLimiterConfig struct {
 	client      client.Client
 	scheme      *runtime.Scheme
 	rateLimiter *v1.RateLimiter
 	configMap   *corev1.ConfigMap
 }
 
-func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileRateLimiterConfig) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Name", request.Name)
 	ctx := context.TODO()
 
-	instance := &v1.RateLimitConfig{}
+	instance := &v1.RateLimiterConfig{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -103,7 +103,7 @@ func (r *ReconcileRateLimitConfig) Reconcile(request reconcile.Request) (reconci
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance *v1.RateLimitConfig) error {
+func (r *ReconcileRateLimiterConfig) getRateLimiter(ctx context.Context, instance *v1.RateLimiterConfig) error {
 	rateLimiter := &v1.RateLimiter{}
 	err := r.client.Get(
 		ctx,
@@ -120,7 +120,7 @@ func (r *ReconcileRateLimitConfig) getRateLimiter(ctx context.Context, instance 
 	return nil
 }
 
-func (r *ReconcileRateLimitConfig) getRateLimiterConfigMap(ctx context.Context, instance *v1.RateLimitConfig) error {
+func (r *ReconcileRateLimiterConfig) getRateLimiterConfigMap(ctx context.Context, instance *v1.RateLimiterConfig) error {
 	configMap := &corev1.ConfigMap{}
 	err := r.client.Get(
 		ctx,
@@ -137,14 +137,14 @@ func (r *ReconcileRateLimitConfig) getRateLimiterConfigMap(ctx context.Context, 
 	return nil
 }
 
-func (r *ReconcileRateLimitConfig) AddFinalizerIfNotExists(ctx context.Context, instance *v1.RateLimitConfig) {
+func (r *ReconcileRateLimiterConfig) AddFinalizerIfNotExists(ctx context.Context, instance *v1.RateLimiterConfig) {
 	if !utils.HasFinalizer(instance, controllerName) {
 		utils.AddFinalizer(instance, controllerName)
 		r.client.Update(ctx, instance)
 	}
 }
 
-func (r *ReconcileRateLimitConfig) manageCleanUpLogic(context context.Context, instance *v1.RateLimitConfig) error {
+func (r *ReconcileRateLimiterConfig) manageCleanUpLogic(context context.Context, instance *v1.RateLimiterConfig) error {
 	if err := r.deleteFromConfigMap(context, instance); err != nil {
 		log.Error(err, "Failed to clean up ConfigMap for config [%s]", instance.Name)
 		return err
