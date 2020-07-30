@@ -19,16 +19,19 @@ import (
 
 func (r *ReconcileRateLimitConfig) reconcileEnvoyFilter(ctx context.Context, instance *v1.RateLimitConfig) (reconcile.Result, error) {
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
+	envoyFilterName := buildEnvoyFilterName(instance)
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: buildEnvoyFilterName(instance), Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
+	err := r.client.Get(ctx, types.NamespacedName{Name: envoyFilterName, Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
 
 	if err != nil && errors.IsNotFound(err) {
-		ef := r.buildEnvoyFilter(instance)
-		log.Info("Creating a new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
+		ef := r.buildEnvoyFilter(instance, envoyFilterName)
+		log.Info("Creating a new EnvoyFilter", "EnvoyFilter.Name", ef.Name)
 		err = r.client.Create(ctx, ef)
 		if err != nil {
-			log.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Namespace", ef.Namespace, "EnvoyFilter.Name", ef.Name)
-			return reconcile.Result{}, err
+			log.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Name", ef.Name)
+			// здесь специально не возвращаем ошибку, так как иначе будет постоянно пытаться создать EnvoyFilter
+			// по какой-то причине не может найти его в istio-system, хотя он там есть
+			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{Requeue: true}, nil
 	} else if err != nil {
@@ -38,10 +41,28 @@ func (r *ReconcileRateLimitConfig) reconcileEnvoyFilter(ctx context.Context, ins
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimitConfig) buildEnvoyFilter(instance *v1.RateLimitConfig) *v1alpha3.EnvoyFilter {
+func (r *ReconcileRateLimitConfig) deleteEnvoyFilter(ctx context.Context, instance *v1.RateLimitConfig) error {
+	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
+
+	err := r.client.Get(ctx, types.NamespacedName{Name: buildEnvoyFilterName(instance), Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
+
+	if err != nil && errors.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	if err = r.client.Delete(ctx, foundEnvoyFilter); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ReconcileRateLimitConfig) buildEnvoyFilter(instance *v1.RateLimitConfig, envoyFilterName string) *v1alpha3.EnvoyFilter {
 	envoyFilter := &v1alpha3.EnvoyFilter{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      buildEnvoyFilterName(instance),
+			Name:      envoyFilterName,
 			Namespace: constants.ISTIO_SYSTEM,
 		},
 		Spec: networking.EnvoyFilter{

@@ -1,7 +1,7 @@
 apiVersion: operators.example.com/v1
 kind: RateLimitConfig
 metadata:
-  name: ratelimit-config
+  name: host-info-srv-config
 spec:
   rateLimiter: "rate-limiter"
   failureModeDeny: false #optional

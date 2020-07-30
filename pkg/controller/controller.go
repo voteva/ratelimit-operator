@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"ratelimit-operator/pkg/controller/ratelimiter"
 	"ratelimit-operator/pkg/controller/ratelimitconfig"
+	"ratelimit-operator/pkg/controller/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 

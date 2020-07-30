@@ -39,7 +39,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	//Watch for changes to secondary resources and requeue the owner RateLimiter
+	// Watch for changes to secondary resources and requeue the owner RateLimiter
 	log.Info("Watch for changes to appsv1.Deployment")
 	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,

@@ -7,7 +7,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func (r *ReconcileRateLimitConfig) reconcileConfigMap(ctx context.Context, instance *v1.RateLimitConfig) (reconcile.Result, error) {
+func (r *ReconcileRateLimitConfig) updateConfigMap(ctx context.Context, instance *v1.RateLimitConfig) (reconcile.Result, error) {
 	data := r.configMap.Data
 	if data == nil {
 		data = make(map[string]string)
@@ -34,6 +34,25 @@ func (r *ReconcileRateLimitConfig) reconcileConfigMap(ctx context.Context, insta
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileRateLimitConfig) deleteFromConfigMap(ctx context.Context, instance *v1.RateLimitConfig) error {
+	data := r.configMap.Data
+	if data == nil {
+		return nil
+	}
+
+	fileName := buildFileName(instance.Name)
+	delete(data, fileName)
+
+	r.configMap.Data = data
+
+	err := r.client.Update(ctx, r.configMap)
+	if err != nil {
+		log.Error(err, "Failed to delete key [%s] from Config Map", fileName)
+		return err
+	}
+	return nil
 }
 
 func (r *ReconcileRateLimitConfig) buildRateLimitPropertyValue(instance *v1.RateLimitConfig) string {
