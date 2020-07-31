@@ -56,7 +56,6 @@ func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter, se
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{
-				Name:       serviceName,
 				Protocol:   corev1.ProtocolTCP,
 				Port:       servicePort,
 				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: servicePort},

@@ -61,11 +61,12 @@ func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
+					Labels:      labels,
+					Annotations: utils.AnnotationSidecarIstio(),
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						r.BuildRedisContainer(),
+						r.BuildRedisContainer(deploymentName),
 					},
 				},
 			},

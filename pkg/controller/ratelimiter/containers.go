@@ -8,12 +8,21 @@ import (
 	"ratelimit-operator/pkg/utils"
 )
 
-func (r *ReconcileRateLimiter) BuildRedisContainer() corev1.Container {
+func (r *ReconcileRateLimiter) BuildRedisContainer(name string) corev1.Container {
 	return corev1.Container{
-		Name:    "redis",
-		Image:   constants.REDIS_IMAGE,
+		Name:  name,
+		Image: constants.REDIS_IMAGE,
+		Ports: []corev1.ContainerPort{{
+			ContainerPort: constants.REDIS_PORT,
+			Protocol:      corev1.ProtocolTCP,
+		}},
 		Command: []string{"redis-server"},
-		Args:    []string{"--save", "\"\"", "--appendonly", "no"},
+		Args: []string{
+			"--save", "\"\"",
+			"--appendonly", "no",
+			"--protected-mode", "no",
+			"--bind", "0.0.0.0",
+		},
 	}
 }
 
