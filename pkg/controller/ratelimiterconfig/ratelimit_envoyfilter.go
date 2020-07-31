@@ -7,6 +7,7 @@ import (
 	proto_types "github.com/gogo/protobuf/types"
 	networking "istio.io/api/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,26 +19,33 @@ import (
 )
 
 func (r *ReconcileRateLimiterConfig) reconcileEnvoyFilter(ctx context.Context, instance *v1.RateLimiterConfig) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Instance.Name", instance.Name)
+
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
 	envoyFilterName := buildEnvoyFilterName(instance)
+	envoyFilterFromInstance := r.buildEnvoyFilter(instance, envoyFilterName)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: envoyFilterName, Namespace: constants.ISTIO_SYSTEM}, foundEnvoyFilter)
-
-	if err != nil && errors.IsNotFound(err) {
-		ef := r.buildEnvoyFilter(instance, envoyFilterName)
-		log.Info("Creating a new EnvoyFilter", "EnvoyFilter.Name", ef.Name)
-		err = r.client.Create(ctx, ef)
-		if err != nil {
-			log.Error(err, "Failed to create new EnvoyFilter", "EnvoyFilter.Name", ef.Name)
-			// здесь специально не возвращаем ошибку, так как иначе будет постоянно пытаться создать EnvoyFilter
-			// по какой-то причине не может найти его в istio-system, хотя он там есть
-			return reconcile.Result{}, nil
+	if err != nil {
+		if errors.IsNotFound(err) {
+			reqLogger.Info("Creating a new EnvoyFilter")
+			err = r.client.Create(ctx, envoyFilterFromInstance)
+			if err != nil {
+				reqLogger.Error(err, "Failed to create new EnvoyFilter")
+				return reconcile.Result{}, err
+			}
+			return reconcile.Result{Requeue: true}, nil
+		} else {
+			reqLogger.Error(err, "Failed to get EnvoyFilter")
+			return reconcile.Result{}, err
 		}
-		return reconcile.Result{Requeue: true}, nil
-	} else if err != nil {
-		log.Error(err, "Failed to get EnvoyFilter")
-		return reconcile.Result{}, err
 	}
+
+	if !equality.Semantic.DeepEqual(foundEnvoyFilter.Spec, envoyFilterFromInstance.Spec) {
+		foundEnvoyFilter.Spec = envoyFilterFromInstance.Spec
+		r.client.Update(ctx, foundEnvoyFilter)
+	}
+
 	return reconcile.Result{}, nil
 }
 
