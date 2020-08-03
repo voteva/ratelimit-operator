@@ -54,7 +54,7 @@ func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Se
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{
-				Name:       instance.Name,
+				Name:       "grpc-" + instance.Name,
 				Protocol:   corev1.ProtocolTCP,
 				Port:       port,
 				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: port},

@@ -1,8 +1,6 @@
 package constants
 
 const (
-	ISTIO_SYSTEM string = "istio-system"
-
 	RUNTIME_ROOT         = "/home/user/src/runtime/data"
 	RUNTIME_SUBDIRECTORY = "ratelimit"
 

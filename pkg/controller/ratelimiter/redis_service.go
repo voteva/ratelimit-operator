@@ -32,10 +32,10 @@ func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, ins
 				return reconcile.Result{}, err
 			}
 			return reconcile.Result{Requeue: true}, nil
+		} else {
+			reqLogger.Error(err, "Failed to get Service Redis")
+			return reconcile.Result{}, err
 		}
-	} else {
-		reqLogger.Error(err, "Failed to get Service Redis")
-		return reconcile.Result{}, err
 	}
 
 	if !equality.Semantic.DeepEqual(foundService.Spec, serviceFromInstance.Spec) {
@@ -56,6 +56,7 @@ func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter, se
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{{
+				Name:       serviceName,
 				Protocol:   corev1.ProtocolTCP,
 				Port:       servicePort,
 				TargetPort: intstr.IntOrString{Type: intstr.Int, IntVal: servicePort},

@@ -149,9 +149,5 @@ func (r *ReconcileRateLimiterConfig) manageCleanUpLogic(context context.Context,
 		log.Error(err, "Failed to clean up ConfigMap for config [%s]", instance.Name)
 		return err
 	}
-	if err := r.deleteEnvoyFilter(context, instance); err != nil {
-		log.Error(err, "Failed to clean up EnvoyFilter for config [%s]", instance.Name)
-		return err
-	}
 	return nil
 }
