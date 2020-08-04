@@ -165,9 +165,10 @@ func (r *ReconcileRateLimiterConfig) buildClusterPatch() string {
 }
 
 func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(instance *v1.RateLimiterConfig) string {
-	var actions []envoyfilter_types.Action
+	var rateLimits []envoyfilter_types.RateLimit
 
 	for _, d := range instance.Spec.RateLimitProperty.Descriptors {
+		var actions []envoyfilter_types.Action
 		actions = append(actions,
 			envoyfilter_types.Action{
 				RequestHeaders: envoyfilter_types.RequestHeader{
@@ -176,9 +177,12 @@ func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(instance *v1.RateLimi
 				},
 			},
 		)
+		rateLimits = append(rateLimits,
+			envoyfilter_types.RateLimit{
+				Actions: actions,
+			})
 	}
 
-	rateLimits := []envoyfilter_types.RateLimit{{Actions: actions}}
 	values := envoyfilter_types.VirtualHostPatchValues{RateLimits: rateLimits}
 
 	res, err := yaml.Marshal(&values)
