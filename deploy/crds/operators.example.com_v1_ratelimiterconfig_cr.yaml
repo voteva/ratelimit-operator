@@ -6,7 +6,8 @@ metadata:
 spec:
   rateLimiter: "rate-limiter"
   failureModeDeny: false
-  virtualHostName: "host-info-srv.org:80"
+  host: "host-info-srv.org"
+  port: 80
   rateLimitProperty:
     domain: host-info
     descriptors:

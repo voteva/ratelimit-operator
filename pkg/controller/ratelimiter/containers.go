@@ -5,7 +5,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/constants"
-	"ratelimit-operator/pkg/utils"
 )
 
 func (r *ReconcileRateLimiter) BuildRedisContainer(name string) corev1.Container {
@@ -27,8 +26,10 @@ func (r *ReconcileRateLimiter) BuildRedisContainer(name string) corev1.Container
 }
 
 func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) corev1.Container {
-	defaultRedisUrl := r.buildRedisUrl(instance)
+	logLevel := r.buildLogLevel(instance)
+	redisUrl := r.buildRedisUrl(instance)
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
+
 	return corev1.Container{
 		Name:  instance.Name,
 		Image: constants.RATE_LIMITER_SERVICE_IMAGE,
@@ -39,7 +40,7 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 		Env: []corev1.EnvVar{
 			{
 				Name:  "LOG_LEVEL",
-				Value: utils.DefaultIfEmpty(string(*instance.Spec.LogLevel), string(v1.INFO)),
+				Value: string(logLevel),
 			},
 			{
 				Name:  "REDIS_SOCKET_TYPE",
@@ -47,7 +48,7 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 			},
 			{
 				Name:  "REDIS_URL",
-				Value: defaultRedisUrl,
+				Value: redisUrl,
 			},
 			{
 				Name:  "RUNTIME_IGNOREDOTFILES",

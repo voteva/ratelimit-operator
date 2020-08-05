@@ -2,6 +2,7 @@ package ratelimiterconfig
 
 import (
 	"context"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,6 +36,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	err = c.Watch(&source.Kind{Type: &v1.RateLimiterConfig{}}, &handler.EnqueueRequestForObject{})
+	if err != nil {
+		return err
+	}
+
+	err = c.Watch(&source.Kind{Type: &v1alpha3.EnvoyFilter{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &v1.RateLimiterConfig{},
+	})
 	if err != nil {
 		return err
 	}

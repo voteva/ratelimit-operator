@@ -28,7 +28,8 @@ type RateLimitProperty struct {
 }
 
 type RateLimiterConfigSpec struct {
-	VirtualHostName   string            `json:"virtualHostName"`
+	Host              string            `json:"host"`
+	Port              int32             `json:"port"`
 	RateLimiter       string            `json:"rateLimiter"`
 	RateLimitProperty RateLimitProperty `json:"rateLimitProperty,omitempty"`
 	FailureModeDeny   bool              `json:"failureModeDeny,omitempty"`

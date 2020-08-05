@@ -2,6 +2,7 @@ package ratelimiterconfig
 
 import (
 	"context"
+	"fmt"
 	"github.com/champly/lib4go/encoding"
 	"github.com/ghodss/yaml"
 	proto_types "github.com/gogo/protobuf/types"
@@ -103,7 +104,7 @@ func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterCo
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_RouteConfiguration{
 							RouteConfiguration: &networking.EnvoyFilter_RouteConfigurationMatch{
 								Vhost: &networking.EnvoyFilter_RouteConfigurationMatch_VirtualHostMatch{
-									Name: instance.Spec.VirtualHostName,
+									Name: r.buildVirtualHostName(instance),
 									Route: &networking.EnvoyFilter_RouteConfigurationMatch_RouteMatch{
 										Action: networking.EnvoyFilter_RouteConfigurationMatch_RouteMatch_ANY,
 									},
@@ -168,18 +169,33 @@ func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(instance *v1.RateLimi
 	var rateLimits []envoyfilter_types.RateLimit
 
 	for _, d := range instance.Spec.RateLimitProperty.Descriptors {
-		var actions []envoyfilter_types.Action
-		actions = append(actions,
-			envoyfilter_types.Action{
-				RequestHeaders: envoyfilter_types.RequestHeader{
+		var action envoyfilter_types.Action
+
+		if d.Key == "header_match" {
+			action = envoyfilter_types.Action{
+				HeaderValueMatch: &envoyfilter_types.HeaderValueMatch{
+					DescriptorValue: d.Value,
+					ExpectMatch:     true,
+					Headers: []envoyfilter_types.Header{{
+						ExactMatch: d.Value,
+						Name:       ":path",
+					}},
+				},
+				RequestHeaders: nil,
+			}
+		} else {
+			action = envoyfilter_types.Action{
+				HeaderValueMatch: nil,
+				RequestHeaders: &envoyfilter_types.RequestHeader{
 					DescriptorKey: d.Key,
 					HeaderName:    d.Key,
 				},
-			},
-		)
+			}
+		}
+
 		rateLimits = append(rateLimits,
 			envoyfilter_types.RateLimit{
-				Actions: actions,
+				Actions: []envoyfilter_types.Action{action},
 			})
 	}
 
@@ -192,10 +208,14 @@ func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(instance *v1.RateLimi
 	return string(res)
 }
 
+func (r *ReconcileRateLimiterConfig) buildVirtualHostName(instance *v1.RateLimiterConfig) string {
+	return fmt.Sprintf("%s:%d", instance.Spec.Host, instance.Spec.Port)
+}
+
 func (r *ReconcileRateLimiterConfig) buildServiceName() string {
-	return r.rateLimiter.Name + "." + r.rateLimiter.Namespace + ".svc.cluster.local"
+	return fmt.Sprintf("%s.%s.%s", r.rateLimiter.Name, r.rateLimiter.Namespace, "svc.cluster.local")
 }
 
 func (r *ReconcileRateLimiterConfig) buildWorkAroundServiceName() string {
-	return "patched." + r.rateLimiter.Name + "." + r.rateLimiter.Namespace + ".svc.cluster.local"
+	return fmt.Sprintf("%s.%s.%s.%s", "patched", r.rateLimiter.Name, r.rateLimiter.Namespace, "svc.cluster.local")
 }

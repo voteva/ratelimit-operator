@@ -32,6 +32,11 @@ spec:
             properties:
               failureModeDeny:
                 type: boolean
+              host:
+                type: string
+              port:
+                format: int32
+                type: integer
               rateLimitProperty:
                 properties:
                   descriptors:
@@ -85,11 +90,10 @@ spec:
                 type: object
               rateLimiter:
                 type: string
-              virtualHostName:
-                type: string
             required:
+            - host
+            - port
             - rateLimiter
-            - virtualHostName
             type: object
           status:
             type: object
