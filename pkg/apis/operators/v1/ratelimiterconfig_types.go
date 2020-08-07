@@ -4,6 +4,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ApplyTo string
+
+const (
+	GATEWAY          ApplyTo = "GATEWAY"
+	SIDECAR          ApplyTo = "SIDECAR"
+	SIDECAR_OUTBOUND ApplyTo = "SIDECAR_OUTBOUND"
+	SIDECAR_INBOUND  ApplyTo = "SIDECAR_INBOUND"
+)
+
 type RateLimit struct {
 	Unit            string `json:"unit" yaml:"unit"`
 	RequestsPerUnit int32  `json:"requests_per_unit" yaml:"requests_per_unit"`
@@ -27,12 +36,18 @@ type RateLimitProperty struct {
 	Descriptors []Descriptor `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
 }
 
+type ConfigPatch struct {
+	ApplyTo                ApplyTo            `json:"applyTo"`
+	Host                   string             `json:"host"`
+	Port                   int32              `json:"port"`
+	WorkloadSelectorLabels *map[string]string `json:"workloadSelectorLabels,omitempty"`
+	RateLimitProperty      RateLimitProperty  `json:"rateLimitProperty,omitempty"`
+	FailureModeDeny        bool               `json:"failureModeDeny,omitempty"`
+}
+
 type RateLimiterConfigSpec struct {
-	Host              string            `json:"host"`
-	Port              int32             `json:"port"`
-	RateLimiter       string            `json:"rateLimiter"`
-	RateLimitProperty RateLimitProperty `json:"rateLimitProperty,omitempty"`
-	FailureModeDeny   bool              `json:"failureModeDeny,omitempty"`
+	ConfigPatches []ConfigPatch `json:"configPatches"`
+	RateLimiter   string        `json:"rateLimiter"`
 }
 
 type RateLimiterConfigStatus struct {
