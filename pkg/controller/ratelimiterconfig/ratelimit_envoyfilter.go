@@ -16,15 +16,24 @@ import (
 	"ratelimit-operator/pkg/controller/ratelimiterconfig/envoyfilter_types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 )
 
 func (r *ReconcileRateLimiterConfig) reconcileEnvoyFilter(ctx context.Context, instance *v1.RateLimiterConfig) (reconcile.Result, error) {
-	reqLogger := log.WithValues("Instance.Name", instance.Name)
+	for _, patch := range instance.Spec.ConfigPatches {
+		envoyFilterFromInstance := r.buildEnvoyFilter(instance, patch)
+		r.buildEnvoyFilterForConfigPatch(ctx, envoyFilterFromInstance)
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileRateLimiterConfig) buildEnvoyFilterForConfigPatch(ctx context.Context, envoyFilterFromInstance *v1alpha3.EnvoyFilter) (reconcile.Result, error) {
+	reqLogger := log.WithValues("Instance.Name", envoyFilterFromInstance.Name)
 
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
-	envoyFilterFromInstance := r.buildEnvoyFilter(instance)
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundEnvoyFilter)
+	err := r.client.Get(ctx, types.NamespacedName{Name: envoyFilterFromInstance.Name, Namespace: envoyFilterFromInstance.Namespace}, foundEnvoyFilter)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Info("Creating a new EnvoyFilter")
@@ -48,23 +57,21 @@ func (r *ReconcileRateLimiterConfig) reconcileEnvoyFilter(ctx context.Context, i
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterConfig) *v1alpha3.EnvoyFilter {
+func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterConfig, patch v1.ConfigPatch) *v1alpha3.EnvoyFilter {
 	envoyFilter := &v1alpha3.EnvoyFilter{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      instance.Name,
+			Name:      r.buildEnvoyFilterName(instance, patch),
 			Namespace: instance.Namespace,
 		},
 		Spec: networking.EnvoyFilter{
 			WorkloadSelector: &networking.WorkloadSelector{
-				Labels: map[string]string{
-					"istio": "ingressgateway",
-				},
+				Labels: r.buildWorkloadSelectorLabels(patch),
 			},
 			ConfigPatches: []*networking.EnvoyFilter_EnvoyConfigObjectPatch{
 				{
 					ApplyTo: networking.EnvoyFilter_HTTP_FILTER,
 					Match: &networking.EnvoyFilter_EnvoyConfigObjectMatch{
-						Context: networking.EnvoyFilter_GATEWAY,
+						Context: r.buildContext(patch),
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_Listener{
 							Listener: &networking.EnvoyFilter_ListenerMatch{
 								FilterChain: &networking.EnvoyFilter_ListenerMatch_FilterChainMatch{
@@ -80,7 +87,7 @@ func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterCo
 					},
 					Patch: &networking.EnvoyFilter_Patch{
 						Operation: networking.EnvoyFilter_Patch_INSERT_BEFORE,
-						Value:     convertYaml2Struct(r.buildHttpFilterPatch(instance)),
+						Value:     convertYaml2Struct(r.buildHttpFilterPatch(patch)),
 					},
 				},
 				{
@@ -88,7 +95,7 @@ func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterCo
 					Match: &networking.EnvoyFilter_EnvoyConfigObjectMatch{
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_Cluster{
 							Cluster: &networking.EnvoyFilter_ClusterMatch{
-								Service: r.buildServiceName(),
+								Service: r.buildRateLimiterServiceName(),
 							},
 						},
 					},
@@ -100,11 +107,11 @@ func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterCo
 				{
 					ApplyTo: networking.EnvoyFilter_VIRTUAL_HOST,
 					Match: &networking.EnvoyFilter_EnvoyConfigObjectMatch{
-						Context: networking.EnvoyFilter_GATEWAY,
+						Context: r.buildContext(patch),
 						ObjectTypes: &networking.EnvoyFilter_EnvoyConfigObjectMatch_RouteConfiguration{
 							RouteConfiguration: &networking.EnvoyFilter_RouteConfigurationMatch{
 								Vhost: &networking.EnvoyFilter_RouteConfigurationMatch_VirtualHostMatch{
-									Name: r.buildVirtualHostName(instance),
+									Name: r.buildVirtualHostName(patch),
 									Route: &networking.EnvoyFilter_RouteConfigurationMatch_RouteMatch{
 										Action: networking.EnvoyFilter_RouteConfigurationMatch_RouteMatch_ANY,
 									},
@@ -114,7 +121,7 @@ func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterCo
 					},
 					Patch: &networking.EnvoyFilter_Patch{
 						Operation: networking.EnvoyFilter_Patch_MERGE,
-						Value:     convertYaml2Struct(r.buildVirtualHostPatch(instance)),
+						Value:     convertYaml2Struct(r.buildVirtualHostPatch(patch)),
 					},
 				},
 			},
@@ -129,12 +136,12 @@ func convertYaml2Struct(str string) *proto_types.Struct {
 	return res
 }
 
-func (r *ReconcileRateLimiterConfig) buildHttpFilterPatch(instance *v1.RateLimiterConfig) string {
+func (r *ReconcileRateLimiterConfig) buildHttpFilterPatch(patch v1.ConfigPatch) string {
 	values := envoyfilter_types.HttpFilterPatchValues{
 		Name: "envoy.rate_limit",
 		Config: envoyfilter_types.Config{
-			Domain:          instance.Spec.RateLimitProperty.Domain,
-			FailureModeDeny: instance.Spec.FailureModeDeny,
+			Domain:          patch.RateLimitProperty.Domain,
+			FailureModeDeny: patch.FailureModeDeny,
 			RateLimitService: envoyfilter_types.RateLimitService{
 				GrpcService: envoyfilter_types.GrpcService{
 					Timeout: "0.25s",
@@ -165,10 +172,10 @@ func (r *ReconcileRateLimiterConfig) buildClusterPatch() string {
 	return string(res)
 }
 
-func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(instance *v1.RateLimiterConfig) string {
+func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(patch v1.ConfigPatch) string {
 	var rateLimits []envoyfilter_types.RateLimit
 
-	for _, d := range instance.Spec.RateLimitProperty.Descriptors {
+	for _, d := range patch.RateLimitProperty.Descriptors {
 		var action envoyfilter_types.Action
 
 		if d.Key == "header_match" {
@@ -208,14 +215,38 @@ func (r *ReconcileRateLimiterConfig) buildVirtualHostPatch(instance *v1.RateLimi
 	return string(res)
 }
 
-func (r *ReconcileRateLimiterConfig) buildVirtualHostName(instance *v1.RateLimiterConfig) string {
-	return fmt.Sprintf("%s:%d", instance.Spec.Host, instance.Spec.Port)
+func (r *ReconcileRateLimiterConfig) buildWorkloadSelectorLabels(patch v1.ConfigPatch) map[string]string {
+	if patch.ApplyTo == v1.GATEWAY {
+		return map[string]string{
+			"istio": "ingressgateway",
+		}
+	} else {
+		return *patch.WorkloadSelectorLabels
+	}
 }
 
-func (r *ReconcileRateLimiterConfig) buildServiceName() string {
+func (r *ReconcileRateLimiterConfig) buildContext(patch v1.ConfigPatch) networking.EnvoyFilter_PatchContext {
+	if patch.ApplyTo == v1.SIDECAR {
+		return networking.EnvoyFilter_SIDECAR_OUTBOUND
+	//} else if patch.ApplyTo == v1.SIDECAR_INBOUND {
+	//	return networking.EnvoyFilter_SIDECAR_INBOUND
+	} else {
+		return networking.EnvoyFilter_GATEWAY
+	}
+}
+
+func (r *ReconcileRateLimiterConfig) buildVirtualHostName(patch v1.ConfigPatch) string {
+	return fmt.Sprintf("%s:%d", patch.Host, patch.Port)
+}
+
+func (r *ReconcileRateLimiterConfig) buildRateLimiterServiceName() string {
 	return fmt.Sprintf("%s.%s.%s", r.rateLimiter.Name, r.rateLimiter.Namespace, "svc.cluster.local")
 }
 
 func (r *ReconcileRateLimiterConfig) buildWorkAroundServiceName() string {
 	return fmt.Sprintf("%s.%s.%s.%s", "patched", r.rateLimiter.Name, r.rateLimiter.Namespace, "svc.cluster.local")
+}
+
+func (r *ReconcileRateLimiterConfig) buildEnvoyFilterName(instance *v1.RateLimiterConfig, patch v1.ConfigPatch) string {
+	return fmt.Sprintf("%s-%s", instance.Name, strings.ToLower(string(patch.ApplyTo)))
 }

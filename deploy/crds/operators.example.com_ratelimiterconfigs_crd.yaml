@@ -30,21 +30,45 @@ spec:
             type: object
           spec:
             properties:
-              failureModeDeny:
-                type: boolean
-              host:
-                type: string
-              port:
-                format: int32
-                type: integer
-              rateLimitProperty:
-                properties:
-                  descriptors:
-                    items:
+              configPatches:
+                items:
+                  properties:
+                    applyTo:
+                      type: string
+                    failureModeDeny:
+                      type: boolean
+                    host:
+                      type: string
+                    port:
+                      format: int32
+                      type: integer
+                    rateLimitProperty:
                       properties:
                         descriptors:
                           items:
                             properties:
+                              descriptors:
+                                items:
+                                  properties:
+                                    key:
+                                      type: string
+                                    rate_limit:
+                                      properties:
+                                        requests_per_unit:
+                                          format: int32
+                                          type: integer
+                                        unit:
+                                          type: string
+                                      required:
+                                      - requests_per_unit
+                                      - unit
+                                      type: object
+                                    value:
+                                      type: string
+                                  required:
+                                  - key
+                                  type: object
+                                type: array
                               key:
                                 type: string
                               rate_limit:
@@ -64,35 +88,25 @@ spec:
                             - key
                             type: object
                           type: array
-                        key:
-                          type: string
-                        rate_limit:
-                          properties:
-                            requests_per_unit:
-                              format: int32
-                              type: integer
-                            unit:
-                              type: string
-                          required:
-                          - requests_per_unit
-                          - unit
-                          type: object
-                        value:
+                        domain:
                           type: string
                       required:
-                      - key
+                      - domain
                       type: object
-                    type: array
-                  domain:
-                    type: string
-                required:
-                - domain
-                type: object
+                    workloadSelectorLabels:
+                      additionalProperties:
+                        type: string
+                      type: object
+                  required:
+                  - applyTo
+                  - host
+                  - port
+                  type: object
+                type: array
               rateLimiter:
                 type: string
             required:
-            - host
-            - port
+            - configPatches
             - rateLimiter
             type: object
           status:

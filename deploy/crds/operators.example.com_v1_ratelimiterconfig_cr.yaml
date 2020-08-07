@@ -2,17 +2,33 @@ apiVersion: operators.example.com/v1
 kind: RateLimiterConfig
 metadata:
   name: host-info-srv-config
-  #namespace: operator-test
+  namespace: operator-test
 spec:
   rateLimiter: "rate-limiter"
-  failureModeDeny: false
-  host: "host-info-srv.org"
-  port: 80
-  rateLimitProperty:
-    domain: host-info
-    descriptors:
-      - key: custom-rl-header
-        value: setting1
-        rate_limit:
-          unit: minute
-          requests_per_unit: 1
+  configPatches:
+    - applyTo: "GATEWAY"
+      host: "host-info-srv.org"
+      port: 80
+      failureModeDeny: false
+      rateLimitProperty:
+        domain: host-info
+        descriptors:
+          - key: custom-rl-header
+            value: setting1
+            rate_limit:
+              unit: minute
+              requests_per_unit: 1
+    - applyTo: "SIDECAR"
+      host: "endpoint-app.operator-test.svc.cluster.local"
+      port: 80
+      workloadSelectorLabels:
+        app: intermediary-app
+      failureModeDeny: false
+      rateLimitProperty:
+        domain: intermediary-app
+        descriptors:
+          - key: custom-rl-header
+            value: setting1
+            rate_limit:
+              unit: minute
+              requests_per_unit: 1
