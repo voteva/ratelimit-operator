@@ -5,30 +5,29 @@ metadata:
   namespace: operator-test
 spec:
   rateLimiter: "rate-limiter"
-  configPatches:
-    - applyTo: "GATEWAY"
-      host: "host-info-srv.org"
-      port: 80
-      failureModeDeny: false
-      rateLimitProperty:
-        domain: host-info
-        descriptors:
-          - key: custom-rl-header
-            value: setting1
-            rate_limit:
-              unit: minute
-              requests_per_unit: 1
-    - applyTo: "SIDECAR"
-      host: "endpoint-app.operator-test.svc.cluster.local"
-      port: 80
-      workloadSelectorLabels:
-        app: intermediary-app
-      failureModeDeny: false
-      rateLimitProperty:
-        domain: intermediary-app
-        descriptors:
-          - key: custom-rl-header
-            value: setting1
-            rate_limit:
-              unit: minute
-              requests_per_unit: 1
+  applyTo: "GATEWAY"
+  host: "host-info-srv.org"
+  port: 80
+  failureModeDeny: false
+  rateLimitProperty:
+    domain: host-info
+    descriptors:
+      - key: custom-rl-header
+        value: setting1
+        rate_limit:
+          unit: minute
+          requests_per_unit: 1
+#  applyTo: "SIDECAR"
+#  host: "endpoint-app.operator-test.svc.cluster.local"
+#  port: 80
+#  workloadSelectorLabels:
+#    app: intermediary-app
+#  failureModeDeny: false
+#  rateLimitProperty:
+#    domain: intermediary-app
+#    descriptors:
+#      - key: custom-rl-header
+#        value: setting1
+#        rate_limit:
+#          unit: minute
+#          requests_per_unit: 1

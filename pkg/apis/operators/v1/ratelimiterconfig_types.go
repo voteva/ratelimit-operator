@@ -36,18 +36,14 @@ type RateLimitProperty struct {
 	Descriptors []Descriptor `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
 }
 
-type ConfigPatch struct {
+type RateLimiterConfigSpec struct {
 	ApplyTo                ApplyTo            `json:"applyTo"`
 	Host                   string             `json:"host"`
 	Port                   int32              `json:"port"`
 	WorkloadSelectorLabels *map[string]string `json:"workloadSelectorLabels,omitempty"`
 	RateLimitProperty      RateLimitProperty  `json:"rateLimitProperty,omitempty"`
 	FailureModeDeny        bool               `json:"failureModeDeny,omitempty"`
-}
-
-type RateLimiterConfigSpec struct {
-	ConfigPatches []ConfigPatch `json:"configPatches"`
-	RateLimiter   string        `json:"rateLimiter"`
+	RateLimiter            string             `json:"rateLimiter"`
 }
 
 type RateLimiterConfigStatus struct {

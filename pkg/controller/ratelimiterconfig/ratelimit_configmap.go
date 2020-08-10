@@ -5,7 +5,6 @@ import (
 	"github.com/ghodss/yaml"
 	"ratelimit-operator/pkg/apis/operators/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"strings"
 )
 
 func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instance *v1.RateLimiterConfig) (reconcile.Result, error) {
@@ -14,22 +13,20 @@ func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instan
 		data = make(map[string]string)
 	}
 
-	for _, patch := range instance.Spec.ConfigPatches {
-		fileName := buildFileName(instance.Name, patch)
+	fileName := buildFileName(instance.Name)
 
-		for key, value := range data {
-			props := r.unmarshalRateLimitPropertyValue(value)
+	for key, value := range data {
+		props := r.unmarshalRateLimitPropertyValue(value)
 
-			if props.Domain == patch.RateLimitProperty.Domain && key != fileName {
-				log.Error(nil, "Failed to add new rate limit configuration. Config already exists with domain "+props.Domain)
-				return reconcile.Result{}, nil
-			}
+		if props.Domain == instance.Spec.RateLimitProperty.Domain && key != fileName {
+			log.Error(nil, "Failed to add new rate limit configuration. Config already exists with domain "+props.Domain)
+			return reconcile.Result{}, nil
 		}
-
-		data[fileName] = r.buildRateLimitPropertyValue(patch.RateLimitProperty)
-
-		r.configMap.Data = data
 	}
+
+	data[fileName] = r.buildRateLimitPropertyValue(instance.Spec.RateLimitProperty)
+
+	r.configMap.Data = data
 
 	err := r.client.Update(ctx, r.configMap)
 	if err != nil {
@@ -45,10 +42,8 @@ func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, in
 		return nil
 	}
 
-	for _, patch := range instance.Spec.ConfigPatches {
-		fileName := buildFileName(instance.Name, patch)
-		delete(data, fileName)
-	}
+	fileName := buildFileName(instance.Name)
+	delete(data, fileName)
 
 	r.configMap.Data = data
 
@@ -77,6 +72,6 @@ func (r *ReconcileRateLimiterConfig) unmarshalRateLimitPropertyValue(data string
 	return props
 }
 
-func buildFileName(name string, patch v1.ConfigPatch) string {
-	return name + "-" + strings.ToLower(string(patch.ApplyTo)) + ".yaml"
+func buildFileName(name string) string {
+	return name + ".yaml"
 }
