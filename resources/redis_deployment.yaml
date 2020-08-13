@@ -1,0 +1,51 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: rate-limiter-redis
+  namespace: operator-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rate-limiter-redis
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: rate-limiter-redis
+      annotations:
+        sidecar.istio.io/inject: 'true'
+    spec:
+      containers:
+        - resources: {}
+          terminationMessagePath: /dev/termination-log
+          name: rate-limiter-redis
+          command:
+            - redis-server
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          terminationMessagePolicy: File
+          image: 'redis:6.0.6'
+          args:
+            - '--save'
+            - '""'
+            - '--appendonly'
+            - 'no'
+            - '--protected-mode'
+            - 'no'
+            - '--bind'
+            - 0.0.0.0
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

@@ -2,6 +2,7 @@ apiVersion: operators.example.com/v1
 kind: RateLimiter
 metadata:
   name: rate-limiter
+  namespace: operator-test
 spec:
-  port: 8081 #optional
-  logLevel: "INFO" #optional
+  port: 8081
+  logLevel: "INFO"

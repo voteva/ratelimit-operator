@@ -1,12 +1,9 @@
 ﻿apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
-  name: filter-ratelimit
-  namespace: istio-system
+  name: host-info-srv-config
+  namespace: operator-test
 spec:
-  workloadSelector:
-    labels:
-      istio: ingressgateway
   configPatches:
     - applyTo: HTTP_FILTER
       match:
@@ -21,43 +18,29 @@ spec:
         operation: INSERT_BEFORE
         value:
           config:
-            domain: test
-            failure_mode_deny: true
+            domain: host-info
+            failure_mode_deny: false
             rate_limit_service:
               grpc_service:
                 envoy_grpc:
-                  cluster_name: rate_limit_service
-                timeout: 10s
+                  cluster_name: patched.rate-limiter.operator-test.svc.cluster.local
+                timeout: 0.25s
           name: envoy.rate_limit
     - applyTo: CLUSTER
       match:
         cluster:
-          service: rate-limit-server.test-project.svc.cluster.local
+          service: rate-limiter.operator-test.svc.cluster.local
       patch:
-        operation: ADD
+        operation: MERGE
         value:
-          connect_timeout: 10s
-          http2_protocol_options: {}
-          lb_policy: ROUND_ROBIN
-          load_assignment:
-            cluster_name: rate_limit_service
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: rate-limit-server.test-project.svc.cluster.local
-                          port_value: 8081
-          name: rate_limit_service
-          type: STRICT_DNS
+          name: patched.rate-limiter.operator-test.svc.cluster.local
     - applyTo: VIRTUAL_HOST
       match:
         context: GATEWAY
         routeConfiguration:
           vhost:
-            name: 'host-info-service.org:80'
-            route:
-              action: ANY
+            name: 'host-info-srv.org:80'
+            route: {}
       patch:
         operation: MERGE
         value:
@@ -66,3 +49,6 @@ spec:
                 - request_headers:
                     descriptor_key: custom-rl-header
                     header_name: custom-rl-header
+  workloadSelector:
+    labels:
+      istio: ingressgateway

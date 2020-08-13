@@ -1,12 +1,13 @@
 ﻿kind: Service
 apiVersion: v1
 metadata:
-  name: rate-limit-server
+  name: rate-limiter-redis
+  namespace: operator-test
 spec:
   ports:
-    - name: grpc-rate-limiter
+    - name: rate-limiter-redis
       protocol: TCP
-      port: 8081
-      targetPort: 8081
+      port: 6379
+      targetPort: 6379
   selector:
-    app: rate-limit-server
+    app: rate-limiter-redis

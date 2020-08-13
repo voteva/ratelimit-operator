@@ -17,6 +17,21 @@ spec:
         rate_limit:
           unit: minute
           requests_per_unit: 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #  applyTo: "SIDECAR"
 #  host: "endpoint-app.operator-test.svc.cluster.local"
 #  port: 80

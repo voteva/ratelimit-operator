@@ -1,42 +1,69 @@
 ﻿kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: rate-limit-server
+  name: rate-limiter
+  namespace: operator-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: rate-limit-server
+      app: rate-limiter
   template:
     metadata:
+      creationTimestamp: null
       labels:
-        app: rate-limit-server
+        app: rate-limiter
       annotations:
         sidecar.istio.io/inject: 'true'
     spec:
       volumes:
         - name: config
           configMap:
-            name: rate-limit-server-config
-            items:
-              - key: rate_limit.property
-                path: config.yaml
+            name: rate-limiter
             defaultMode: 420
       containers:
-        - name: redis
-          image: 'redis:alpine'
         - resources: {}
-          name: rate-limit-server
+          terminationMessagePath: /dev/termination-log
+          name: rate-limiter
+          command:
+            - sh
+            - '-c'
+            - /bin/startup.sh
+          env:
+            - name: LOG_LEVEL
+              value: INFO
+            - name: REDIS_SOCKET_TYPE
+              value: TCP
+            - name: REDIS_URL
+              value: 'rate-limiter-redis:6379'
+            - name: RUNTIME_IGNOREDOTFILES
+              value: 'true'
+            - name: RUNTIME_ROOT
+              value: /home/user/src/runtime/data
+            - name: RUNTIME_SUBDIRECTORY
+              value: ratelimit
+            - name: RUNTIME_WATCH_ROOT
+              value: 'false'
+            - name: USE_STATSD
+              value: 'false'
           ports:
             - containerPort: 8081
               protocol: TCP
-            - containerPort: 8080
-              protocol: TCP
+          imagePullPolicy: Always
           volumeMounts:
             - name: config
-              mountPath: /data/ratelimit/config
+              mountPath: /home/user/src/runtime/data/ratelimit/config
           terminationMessagePolicy: File
-          envFrom:
-            - configMapRef:
-                name: rate-limit-config
-          image: evil26r/service_rite_limit
+          image: evil26r/rate-limit-rhel7
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  revisionHistoryLimit: 10
+  progressDeadlineSeconds: 600

@@ -31,7 +31,12 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 
 	return corev1.Container{
-		Name:  instance.Name,
+		Name: instance.Name,
+		Command: []string{
+			"sh",
+			"-c",
+			"/bin/startup.sh",
+		},
 		Image: constants.RATE_LIMITER_SERVICE_IMAGE,
 		Ports: []corev1.ContainerPort{{
 			ContainerPort: r.buildRateLimiterServicePort(instance),
@@ -40,7 +45,7 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 		Env: []corev1.EnvVar{
 			{
 				Name:  "LOG_LEVEL",
-				Value: string(logLevel),
+				Value: logLevel,
 			},
 			{
 				Name:  "REDIS_SOCKET_TYPE",
