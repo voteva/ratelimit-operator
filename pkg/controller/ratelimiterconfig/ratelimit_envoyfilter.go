@@ -24,11 +24,11 @@ func (r *ReconcileRateLimiterConfig) reconcileEnvoyFilter(ctx context.Context, i
 
 	foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: envoyFilterFromInstance.Name, Namespace: envoyFilterFromInstance.Namespace}, foundEnvoyFilter)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: envoyFilterFromInstance.Name, Namespace: envoyFilterFromInstance.Namespace}, foundEnvoyFilter)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Info("Creating a new EnvoyFilter")
-			err = r.client.Create(ctx, envoyFilterFromInstance)
+			err = r.Client.Create(ctx, envoyFilterFromInstance)
 			if err != nil {
 				reqLogger.Error(err, "Failed to create new EnvoyFilter")
 				return reconcile.Result{}, err
@@ -42,7 +42,7 @@ func (r *ReconcileRateLimiterConfig) reconcileEnvoyFilter(ctx context.Context, i
 
 	if !equality.Semantic.DeepEqual(foundEnvoyFilter.Spec, envoyFilterFromInstance.Spec) {
 		foundEnvoyFilter.Spec = envoyFilterFromInstance.Spec
-		r.client.Update(ctx, foundEnvoyFilter)
+		r.Client.Update(ctx, foundEnvoyFilter)
 	}
 
 	return reconcile.Result{}, nil
@@ -118,7 +118,7 @@ func (r *ReconcileRateLimiterConfig) buildEnvoyFilter(instance *v1.RateLimiterCo
 			},
 		},
 	}
-	controllerutil.SetControllerReference(instance, envoyFilter, r.scheme)
+	controllerutil.SetControllerReference(instance, envoyFilter, r.Scheme)
 	return envoyFilter
 }
 
