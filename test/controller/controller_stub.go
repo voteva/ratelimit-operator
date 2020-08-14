@@ -1,27 +1,28 @@
 package controller
 
 import (
+	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"github.com/golang-collections/go-datastructures/queue"
+	"time"
 )
 
 type StubController struct {
-	Client client.Client
+	Client     client.Client
 	Reconciler reconcile.Reconciler
-	requestQueue *queue.Queue
-	watches []watchTarget
+	Queue      workqueue.RateLimitingInterface
+	watches    []watchTarget
 }
 
 func NewStubController(client client.Client, reconciler reconcile.Reconciler) *StubController {
 	return &StubController{
-		Client:       client,
-		Reconciler:   reconciler,
-		requestQueue: queue.New(100),
-		watches: *new([]watchTarget),
+		Client:     client,
+		Reconciler: reconciler,
+		Queue:      NewStubQueue(),
+		watches:    *new([]watchTarget),
 	}
 }
 
@@ -56,7 +57,55 @@ func (c *StubController) Reconcile(request reconcile.Request) (reconcile.Result,
 }
 
 type watchTarget struct {
-	src source.Source
+	src          source.Source
 	eventhandler handler.EventHandler
-	predicates []predicate.Predicate
+	predicates   []predicate.Predicate
+}
+
+type StubRateLimitingQueue struct {
+	wrappedQueue workqueue.Interface
+}
+
+func (s StubRateLimitingQueue) Add(item interface{}) {
+	s.wrappedQueue.Add(item)
+}
+
+func (s StubRateLimitingQueue) Len() int {
+	return s.wrappedQueue.Len()
+}
+
+func (s StubRateLimitingQueue) Get() (item interface{}, shutdown bool) {
+	return s.wrappedQueue.Get()
+}
+
+func (s StubRateLimitingQueue) Done(item interface{}) {
+	s.wrappedQueue.Done(item)
+}
+
+func (s StubRateLimitingQueue) ShutDown() {
+	s.wrappedQueue.ShutDown()
+}
+
+func (s StubRateLimitingQueue) ShuttingDown() bool {
+	return s.wrappedQueue.ShuttingDown()
+}
+
+func (s StubRateLimitingQueue) AddAfter(item interface{}, duration time.Duration) {
+	s.wrappedQueue.Add(item)
+}
+
+func (s StubRateLimitingQueue) AddRateLimited(item interface{}) {
+	s.wrappedQueue.Add(item)
+}
+
+func (s StubRateLimitingQueue) Forget(item interface{}) {
+
+}
+
+func (s StubRateLimitingQueue) NumRequeues(item interface{}) int {
+	return 0
+}
+
+func NewStubQueue() StubRateLimitingQueue {
+	return StubRateLimitingQueue{wrappedQueue: workqueue.New()}
 }
