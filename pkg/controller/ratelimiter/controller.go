@@ -74,7 +74,7 @@ type ReconcileRateLimiter struct {
 	Scheme *runtime.Scheme
 }
 
-func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.TODO()
 
 	instance := &v1.RateLimiter{}

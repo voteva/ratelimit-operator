@@ -32,7 +32,7 @@ func (c *StubController) Watch(src source.Source, eventhandler handler.EventHand
 		eventhandler: eventhandler,
 		predicates:   predicates,
 	})
-	return nil
+	return src.Start(eventhandler, c.Queue, predicates...)
 }
 
 // Start starts the controller.  Start blocks until stop is closed or a
@@ -42,18 +42,41 @@ func (c *StubController) Start(stop <-chan struct{}) error {
 }
 
 func (c *StubController) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	condition := false
-	for ok := true; ok; ok = condition {
-		result, err := c.Reconciler.Reconcile(request)
-		switch {
-		case err != nil || result.Requeue:
-			condition = true
-		default:
-			condition = false
-		}
+	var nextRequest *reconcile.Request
+	if &request != nil {
+		nextRequest = &request
+	} else {
+		nextRequest = c.nextRequest()
+	}
+
+	for &nextRequest != nil {
+		c.reconcileRequest(*nextRequest)
+		nextRequest = c.nextRequest()
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (c *StubController) reconcileRequest(request reconcile.Request) {
+	needRequeue := false
+	for ok := true; ok; ok = needRequeue {
+		result, err := c.Reconciler.Reconcile(request)
+		switch {
+		case err != nil || result.Requeue:
+			needRequeue = true
+		default:
+			needRequeue = false
+		}
+	}
+}
+
+func (c *StubController) nextRequest() *reconcile.Request {
+	var nextRequest *reconcile.Request
+	if !c.Queue.ShuttingDown() && c.Queue.Len() > 0 {
+		get, _ := c.Queue.Get()
+		nextRequest = get.(*reconcile.Request)
+	}
+	return nextRequest
 }
 
 type watchTarget struct {
