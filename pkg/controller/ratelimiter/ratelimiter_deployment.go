@@ -47,7 +47,6 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForService(ctx context.Context
 
 func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
 	labels := utils.LabelsForApp(instance.Name)
-	replicas := int32(1)
 	var defaultMode int32 = 420
 
 	dep := &appsv1.Deployment{
@@ -56,7 +55,7 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 			Namespace: instance.Namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: instance.Spec.Size,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},

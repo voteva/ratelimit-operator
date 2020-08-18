@@ -4,6 +4,7 @@ import (
 	"context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"ratelimit-operator/pkg/constants"
 
 	"ratelimit-operator/pkg/apis/operators/v1"
 
@@ -86,6 +87,8 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
+	r.updateWithDefaults(ctx, instance)
+
 	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {
 		return result, err
 	}
@@ -107,4 +110,28 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 	}
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileRateLimiter) updateWithDefaults(ctx context.Context, instance *v1.RateLimiter) {
+	needUpdate := false
+
+	if instance.Spec.LogLevel == nil {
+		defaultLogLevel := v1.WARN
+		instance.Spec.LogLevel = &defaultLogLevel
+		needUpdate = true
+	}
+	if instance.Spec.Port == nil {
+		defaultPort := constants.DEFAULT_RATELIMITER_PORT
+		instance.Spec.Port = &defaultPort
+		needUpdate = true
+	}
+	if instance.Spec.Size == nil {
+		defaultSize := constants.DEFAULT_RATELIMITER_SIZE
+		instance.Spec.Size = &defaultSize
+		needUpdate = true
+	}
+
+	if needUpdate {
+		r.client.Update(ctx, instance)
+	}
 }

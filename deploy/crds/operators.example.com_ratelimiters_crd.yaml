@@ -36,6 +36,9 @@ spec:
               port:
                 format: int32
                 type: integer
+              size:
+                format: int32
+                type: integer
             type: object
           status:
             description: RateLimiterStatus defines the observed state of RateLimiter

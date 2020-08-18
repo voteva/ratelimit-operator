@@ -65,7 +65,7 @@ func (r *ReconcileRateLimiterConfig) Reconcile(request reconcile.Request) (recon
 	ctx := context.TODO()
 
 	instance := &v1.RateLimiterConfig{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	err := r.client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil

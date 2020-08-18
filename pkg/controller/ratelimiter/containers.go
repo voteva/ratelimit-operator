@@ -26,7 +26,6 @@ func (r *ReconcileRateLimiter) BuildRedisContainer(name string) corev1.Container
 }
 
 func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) corev1.Container {
-	logLevel := r.buildLogLevel(instance)
 	redisUrl := r.buildRedisUrl(instance)
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 
@@ -39,13 +38,13 @@ func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) c
 		},
 		Image: constants.RATE_LIMITER_SERVICE_IMAGE,
 		Ports: []corev1.ContainerPort{{
-			ContainerPort: r.buildRateLimiterServicePort(instance),
+			ContainerPort: *instance.Spec.Port,
 			Protocol:      corev1.ProtocolTCP,
 		}},
 		Env: []corev1.EnvVar{
 			{
 				Name:  "LOG_LEVEL",
-				Value: logLevel,
+				Value: string(*instance.Spec.LogLevel),
 			},
 			{
 				Name:  "REDIS_SOCKET_TYPE",

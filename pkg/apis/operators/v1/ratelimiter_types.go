@@ -7,18 +7,21 @@ import (
 type LogLevel string
 
 const (
-	// Log level INFO.
-	INFO LogLevel = "INFO"
 	// Log level DEBUG.
 	DEBUG LogLevel = "DEBUG"
+	// Log level INFO.
+	INFO LogLevel = "INFO"
+	// Log level WARN.
+	WARN LogLevel = "WARN"
 	// Log level ERROR.
 	ERROR LogLevel = "ERROR"
 )
 
 // RateLimiterSpec defines the desired state of RateLimiter
 type RateLimiterSpec struct {
-	Port     *int32    `json:"port,omitempty"`
 	LogLevel *LogLevel `json:"logLevel,omitempty"`
+	Port     *int32    `json:"port,omitempty"`
+	Size     *int32    `json:"size,omitempty"`
 }
 
 // RateLimiterStatus defines the observed state of RateLimiter

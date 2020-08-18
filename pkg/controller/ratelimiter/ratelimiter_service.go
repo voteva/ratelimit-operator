@@ -45,8 +45,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 }
 
 func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Service {
-	port := r.buildRateLimiterServicePort(instance)
-
+	port := *instance.Spec.Port
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name,
