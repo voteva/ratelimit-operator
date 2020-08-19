@@ -16,7 +16,7 @@ func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instan
 	fileName := buildFileName(instance.Name)
 
 	for key, value := range data {
-		props := r.unmarshalRateLimitPropertyValue(value)
+		props := unmarshalRateLimitPropertyValue(value)
 
 		if props.Domain == instance.Spec.RateLimitProperty.Domain && key != fileName {
 			log.Error(nil, "Failed to add new rate limit configuration. Config already exists with domain "+props.Domain)
@@ -24,7 +24,7 @@ func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instan
 		}
 	}
 
-	data[fileName] = r.buildRateLimitPropertyValue(instance.Spec.RateLimitProperty)
+	data[fileName] = buildRateLimitPropertyValue(instance.Spec.RateLimitProperty)
 
 	r.configMap.Data = data
 
@@ -55,7 +55,7 @@ func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, in
 	return nil
 }
 
-func (r *ReconcileRateLimiterConfig) buildRateLimitPropertyValue(prop v1.RateLimitProperty) string {
+func buildRateLimitPropertyValue(prop v1.RateLimitProperty) string {
 	res, err := yaml.Marshal(&prop)
 	if err != nil {
 		log.Error(err, "Failed to convert object to yaml")
@@ -63,7 +63,7 @@ func (r *ReconcileRateLimiterConfig) buildRateLimitPropertyValue(prop v1.RateLim
 	return string(res)
 }
 
-func (r *ReconcileRateLimiterConfig) unmarshalRateLimitPropertyValue(data string) v1.RateLimitProperty {
+func unmarshalRateLimitPropertyValue(data string) v1.RateLimitProperty {
 	props := v1.RateLimitProperty{}
 	err := yaml.Unmarshal([]byte(data), &props)
 	if err != nil {

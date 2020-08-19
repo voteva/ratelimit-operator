@@ -7,7 +7,7 @@ import (
 	"ratelimit-operator/pkg/constants"
 )
 
-func (r *ReconcileRateLimiter) BuildRedisContainer(name string) corev1.Container {
+func buildRedisContainer(name string) corev1.Container {
 	return corev1.Container{
 		Name:  name,
 		Image: constants.REDIS_IMAGE,
@@ -25,8 +25,8 @@ func (r *ReconcileRateLimiter) BuildRedisContainer(name string) corev1.Container
 	}
 }
 
-func (r *ReconcileRateLimiter) BuildServiceContainer(instance *v1.RateLimiter) corev1.Container {
-	redisUrl := r.buildRedisUrl(instance)
+func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
+	redisUrl := buildRedisUrl(instance)
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 
 	return corev1.Container{

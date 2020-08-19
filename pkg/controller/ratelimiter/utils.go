@@ -6,10 +6,10 @@ import (
 	"strconv"
 )
 
-func (r *ReconcileRateLimiter) buildNameForRedis(instance *v1.RateLimiter) string {
+func buildNameForRedis(instance *v1.RateLimiter) string {
 	return instance.Name + "-redis"
 }
 
-func (r *ReconcileRateLimiter) buildRedisUrl(instance *v1.RateLimiter) string {
-	return r.buildNameForRedis(instance) + ":" + strconv.Itoa(int(constants.REDIS_PORT))
+func buildRedisUrl(instance *v1.RateLimiter) string {
+	return buildNameForRedis(instance) + ":" + strconv.Itoa(int(constants.REDIS_PORT))
 }

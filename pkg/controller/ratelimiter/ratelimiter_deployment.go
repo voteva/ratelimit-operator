@@ -5,13 +5,13 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"ratelimit-operator/pkg/utils"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"ratelimit-operator/pkg/apis/operators/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -19,7 +19,8 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForService(ctx context.Context
 	reqLogger := log.WithValues("Instance.Name", instance.Name)
 
 	foundDeployment := &appsv1.Deployment{}
-	deploymentFromInstance := r.buildDeploymentForService(instance)
+	deploymentFromInstance := buildDeploymentForService(instance)
+	_ = controllerutil.SetControllerReference(instance, deploymentFromInstance, r.scheme)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundDeployment)
 	if err != nil {
@@ -45,7 +46,7 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForService(ctx context.Context
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
+func buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
 	labels := utils.LabelsForApp(instance.Name)
 	var defaultMode int32 = 420
 
@@ -77,12 +78,11 @@ func (r *ReconcileRateLimiter) buildDeploymentForService(instance *v1.RateLimite
 						},
 					}},
 					Containers: []corev1.Container{
-						r.BuildServiceContainer(instance),
+						buildServiceContainer(instance),
 					},
 				},
 			},
 		},
 	}
-	controllerutil.SetControllerReference(instance, dep, r.scheme)
 	return dep
 }

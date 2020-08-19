@@ -19,8 +19,10 @@ func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, ins
 	reqLogger := log.WithValues("Instance.Name", instance.Name)
 
 	foundService := &corev1.Service{}
-	serviceName := r.buildNameForRedis(instance)
-	serviceFromInstance := r.buildServiceForRedis(instance, serviceName)
+	serviceName := buildNameForRedis(instance)
+
+	serviceFromInstance := buildServiceForRedis(instance, serviceName)
+	_ = controllerutil.SetControllerReference(instance, serviceFromInstance, r.scheme)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: serviceName, Namespace: instance.Namespace}, foundService)
 	if err != nil {
@@ -46,7 +48,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, ins
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter, serviceName string) *corev1.Service {
+func buildServiceForRedis(instance *v1.RateLimiter, serviceName string) *corev1.Service {
 	servicePort := constants.REDIS_PORT
 
 	service := &corev1.Service{
@@ -64,6 +66,5 @@ func (r *ReconcileRateLimiter) buildServiceForRedis(instance *v1.RateLimiter, se
 			Selector: utils.SelectorsForApp(serviceName),
 		},
 	}
-	controllerutil.SetControllerReference(instance, service, r.scheme)
 	return service
 }

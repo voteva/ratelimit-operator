@@ -19,7 +19,9 @@ func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance 
 	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundConfigMap)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			configMapFromInstance := r.buildConfigMap(instance)
+			configMapFromInstance := buildConfigMap(instance)
+			_ = controllerutil.SetControllerReference(instance, configMapFromInstance, r.scheme)
+
 			reqLogger.Info("Creating a new ConfigMap")
 			err = r.client.Create(ctx, configMapFromInstance)
 			if err != nil {
@@ -35,7 +37,7 @@ func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildConfigMap(instance *v1.RateLimiter) *corev1.ConfigMap {
+func buildConfigMap(instance *v1.RateLimiter) *corev1.ConfigMap {
 	configMap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name,
@@ -43,6 +45,5 @@ func (r *ReconcileRateLimiter) buildConfigMap(instance *v1.RateLimiter) *corev1.
 		},
 		Data: map[string]string{},
 	}
-	controllerutil.SetControllerReference(instance, configMap, r.scheme)
 	return configMap
 }

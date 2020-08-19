@@ -18,7 +18,8 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 	reqLogger := log.WithValues("Instance.Name", instance.Name)
 
 	foundService := &corev1.Service{}
-	serviceFromInstance := r.buildService(instance)
+	serviceFromInstance := buildService(instance)
+	_ = controllerutil.SetControllerReference(instance, serviceFromInstance, r.scheme)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)
 	if err != nil {
@@ -44,7 +45,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Service {
+func buildService(instance *v1.RateLimiter) *corev1.Service {
 	port := *instance.Spec.Port
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -61,6 +62,5 @@ func (r *ReconcileRateLimiter) buildService(instance *v1.RateLimiter) *corev1.Se
 			Selector: utils.SelectorsForApp(instance.Name),
 		},
 	}
-	controllerutil.SetControllerReference(instance, service, r.scheme)
 	return service
 }

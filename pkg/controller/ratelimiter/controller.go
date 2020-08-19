@@ -87,7 +87,9 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 		return reconcile.Result{}, err
 	}
 
-	r.updateWithDefaults(ctx, instance)
+	if isNeedUpdateWithDefaults(instance) {
+		r.client.Update(ctx, instance)
+	}
 
 	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {
 		return result, err
@@ -112,7 +114,7 @@ func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.R
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) updateWithDefaults(ctx context.Context, instance *v1.RateLimiter) {
+func isNeedUpdateWithDefaults(instance *v1.RateLimiter) bool {
 	needUpdate := false
 
 	if instance.Spec.LogLevel == nil {
@@ -130,8 +132,5 @@ func (r *ReconcileRateLimiter) updateWithDefaults(ctx context.Context, instance 
 		instance.Spec.Size = &defaultSize
 		needUpdate = true
 	}
-
-	if needUpdate {
-		r.client.Update(ctx, instance)
-	}
+	return needUpdate
 }

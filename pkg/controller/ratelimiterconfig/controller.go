@@ -93,7 +93,7 @@ func (r *ReconcileRateLimiterConfig) Reconcile(request reconcile.Request) (recon
 		return result, err
 	}
 
-	r.AddFinalizerIfNotExists(ctx, instance)
+	r.addFinalizerIfNotExists(ctx, instance)
 
 	if utils.IsBeingDeleted(instance) {
 		if !utils.HasFinalizer(instance, controllerName) {
@@ -146,7 +146,7 @@ func (r *ReconcileRateLimiterConfig) getRateLimiterConfigMap(ctx context.Context
 	return nil
 }
 
-func (r *ReconcileRateLimiterConfig) AddFinalizerIfNotExists(ctx context.Context, instance *v1.RateLimiterConfig) {
+func (r *ReconcileRateLimiterConfig) addFinalizerIfNotExists(ctx context.Context, instance *v1.RateLimiterConfig) {
 	if !utils.HasFinalizer(instance, controllerName) {
 		utils.AddFinalizer(instance, controllerName)
 		r.client.Update(ctx, instance)

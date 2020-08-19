@@ -18,8 +18,10 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 	reqLogger := log.WithValues("Instance.Name", instance.Name)
 
 	foundDeployment := &appsv1.Deployment{}
-	deploymentName := r.buildNameForRedis(instance)
-	deploymentFromInstance := r.buildDeploymentForRedis(instance, deploymentName)
+	deploymentName := buildNameForRedis(instance)
+
+	deploymentFromInstance := buildDeploymentForRedis(instance, deploymentName)
+	_ = controllerutil.SetControllerReference(instance, deploymentFromInstance, r.scheme)
 
 	err := r.client.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: instance.Namespace}, foundDeployment)
 	if err != nil {
@@ -45,7 +47,7 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 	return reconcile.Result{}, nil
 }
 
-func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter, deploymentName string) *appsv1.Deployment {
+func buildDeploymentForRedis(instance *v1.RateLimiter, deploymentName string) *appsv1.Deployment {
 	labels := utils.LabelsForApp(deploymentName)
 	replicas := int32(1)
 
@@ -66,12 +68,11 @@ func (r *ReconcileRateLimiter) buildDeploymentForRedis(instance *v1.RateLimiter,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
-						r.BuildRedisContainer(deploymentName),
+						buildRedisContainer(deploymentName),
 					},
 				},
 			},
 		},
 	}
-	controllerutil.SetControllerReference(instance, dep, r.scheme)
 	return dep
 }
