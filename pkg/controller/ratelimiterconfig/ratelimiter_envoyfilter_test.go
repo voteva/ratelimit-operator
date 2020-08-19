@@ -1,8 +1,11 @@
 package ratelimiterconfig
-/*
+
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/utils"
 	"testing"
 )
 
@@ -11,32 +14,35 @@ func Test_HttpFilterPatch_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build patch for http filter", func(t *testing.T) {
-		var strPatch = `
-          config:
-            domain: test
-            failure_mode_deny: true
-            rate_limit_service:
-              grpc_service:
-                envoy_grpc:
-                  cluster_name: rate_limit_service
-                timeout: 10s
-          name: envoy.rate_limit`
-
-		expectedPatch := convertYaml2Struct(strPatch)
-
-		instance := v1.RateLimitConfig{
-			Spec: v1.RateLimitConfigSpec{
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
 				RateLimitProperty: v1.RateLimitProperty{
-					Domain: "test",
+					Domain: utils.BuildRandomString(3),
 				},
 				FailureModeDeny: true,
 			},
 		}
+		rateLimiter := buildRateLimiter()
 
-		result := buildHttpFilterPatch(&instance)
-		patch := convertYaml2Struct(result)
+		expectedPatchValue := fmt.Sprintf(`
+          config:
+            domain: %s
+            failure_mode_deny: true
+            rate_limit_service:
+              grpc_service:
+                envoy_grpc:
+                  cluster_name: %s
+                timeout: 0.25s
+          name: envoy.rate_limit`,
+			rateLimiterConfig.Spec.RateLimitProperty.Domain,
+			buildWorkAroundServiceName(rateLimiter))
 
-		a.Equal(patch, expectedPatch)
+		expectedPatch := convertYaml2Struct(expectedPatchValue)
+
+		actualPatchValue := buildHttpFilterPatchValue(rateLimiterConfig, rateLimiter)
+		actualPatch := convertYaml2Struct(actualPatchValue)
+
+		a.Equal(actualPatch, expectedPatch)
 	})
 }
 
@@ -45,38 +51,19 @@ func Test_ClusterPatch_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build patch for cluster", func(t *testing.T) {
-		var strPatch = `
-          connect_timeout: 10s
-          http2_protocol_options: {}
-          lb_policy: ROUND_ROBIN
-          load_assignment:
-            cluster_name: rate_limit_service
-            endpoints:
-              - lb_endpoints:
-                  - endpoint:
-                      address:
-                        socket_address:
-                          address: rate-limit.operator-test.svc.cluster.local
-                          port_value: 8081
-          name: rate_limit_service
-          type: STRICT_DNS`
+		rateLimiter := buildRateLimiter()
 
-		expectedPatch := convertYaml2Struct(strPatch)
+		expectedPatchValue := fmt.Sprintf("name: %s", buildWorkAroundServiceName(rateLimiter))
+		expectedPatch := convertYaml2Struct(expectedPatchValue)
 
-		instance := v1.RateLimiter{
-			Spec: v1.RateLimiterSpec{
-				Port: 8081,
-			},
-		}
+		actualPatchValue := buildClusterPatchValue(rateLimiter)
+		actualPatch := convertYaml2Struct(actualPatchValue)
 
-		result := buildClusterPatch(&instance)
-		patch := convertYaml2Struct(result)
-
-		a.Equal(patch, expectedPatch)
+		a.Equal(actualPatch, expectedPatch)
 	})
 }
 
-func Test_VirtualHostPatch_Success(t *testing.T) {
+func Test_VirtualHostPatchValue_Success(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
@@ -90,8 +77,8 @@ func Test_VirtualHostPatch_Success(t *testing.T) {
 
 		expectedPatch := convertYaml2Struct(strPatch)
 
-		instance := v1.RateLimiter{
-			Spec: v1.RateLimiterSpec{
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
 				RateLimitProperty: v1.RateLimitProperty{
 					Descriptors: []v1.Descriptor{{
 						Key: "custom-rl-header",
@@ -100,10 +87,65 @@ func Test_VirtualHostPatch_Success(t *testing.T) {
 			},
 		}
 
-		result := buildVirtualHostPatch(&instance)
-		patch := convertYaml2Struct(result)
+		actualPatchValue := buildVirtualHostPatchValue(rateLimiterConfig)
+		actualPatch := convertYaml2Struct(actualPatchValue)
 
-		a.Equal(patch, expectedPatch)
+		a.Equal(actualPatch, expectedPatch)
 	})
 }
-*/
+
+func Test_BuildVirtualHostName_Success(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build virtual host name", func(t *testing.T) {
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
+				Host: utils.BuildRandomString(3),
+				Port: int32(utils.BuildRandomInt(4)),
+			},
+		}
+
+		expectedResult := fmt.Sprintf("%s:%d", rateLimiterConfig.Spec.Host, rateLimiterConfig.Spec.Port)
+		actualResult := buildVirtualHostName(rateLimiterConfig)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func Test_BuildRateLimiterServiceName_Success(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build rate limiter service name", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+
+		expectedResult := fmt.Sprintf("%s.%s.%s", rateLimiter.Name, rateLimiter.Namespace, "svc.cluster.local")
+		actualResult := buildRateLimiterServiceName(rateLimiter)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func Test_BuildWorkAroundServiceName_Success(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build work around service name", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+
+		expectedResult := fmt.Sprintf("%s.%s.%s.%s", "patched", rateLimiter.Name, rateLimiter.Namespace, "svc.cluster.local")
+		actualResult := buildWorkAroundServiceName(rateLimiter)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func buildRateLimiter() *v1.RateLimiter {
+	return &v1.RateLimiter{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      utils.BuildRandomString(3),
+			Namespace: utils.BuildRandomString(3),
+		},
+	}
+}
