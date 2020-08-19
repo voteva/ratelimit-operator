@@ -15,8 +15,14 @@ import (
 	"ratelimit-operator/pkg/apis"
 	v12 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/controller/ratelimiter"
+	"ratelimit-operator/test/controller"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/cache/informertest"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 var (
@@ -189,6 +195,61 @@ var _ = Describe("RateLimit controller", func() {
 
 			cfgMap = &v1.ConfigMap{}
 			err = reconciler.Client.Get(context.TODO(), types.NamespacedName{Namespace: preparedConfigMap.Namespace, Name: preparedConfigMap.Name}, cfgMap)
+			Expect(err).To(BeNil(), "Service is nil")
+		})
+	})
+
+	Context("when RateLimit resource added. Controller stub", func() {
+
+		It("reconcile RateLimit. create secondary resources", func() {
+
+			var cacheInformers cache.Cache = &informertest.FakeInformers{
+				Scheme: scheme,
+			}
+
+			objects := []runtime.Object{preparedRateLimiter}
+			client := controller.NewStubClient(scheme, &cacheInformers, objects...)
+			reconcileRateLimiter := ratelimiter.ReconcileRateLimiter{
+				Client: client,
+				Scheme: scheme,
+			}
+			controller := controller.NewStubController(client, reconcileRateLimiter, cacheInformers, *scheme)
+
+			rateLimiterSource := &source.Kind{Type: &v12.RateLimiter{}}
+			inject.CacheInto(cacheInformers, rateLimiterSource)
+			
+			configMapSource := &source.Kind{Type: &v1.ConfigMap{}}
+			inject.CacheInto(cacheInformers, configMapSource)
+
+
+			controller.Watch(rateLimiterSource, &handler.EnqueueRequestForObject{})
+			controller.Watch(configMapSource, &handler.EnqueueRequestForOwner{
+				OwnerType:    &v12.RateLimiter{},
+				IsController: true,
+			})
+
+			request := &reconcile.Request{NamespacedName: types.NamespacedName{Namespace: namespace, Name: name}}
+
+			//reconcile loop (creation of primary resource should be a reason of reconcile call)
+			controller.Reconcile(*request)
+
+			//check for created objects
+			dep := &appsv1.Deployment{}
+			confMap := &v1.ConfigMap{}
+			srv := &v1.Service{}
+			redisDep := &appsv1.Deployment{}
+			var err error
+
+			err = client.Get(context.TODO(), request.NamespacedName, dep)
+			Expect(err).To(BeNil(), "Deployment is nil")
+
+			err = client.Get(context.TODO(), request.NamespacedName, redisDep)
+			Expect(err).To(BeNil(), "Redis Deployment is nil")
+
+			err = client.Get(context.TODO(), request.NamespacedName, confMap)
+			Expect(err).To(BeNil(), "ConfigMap is nil")
+
+			err = client.Get(context.TODO(), request.NamespacedName, srv)
 			Expect(err).To(BeNil(), "Service is nil")
 		})
 	})

@@ -11,6 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllertest"
 )
 
+//StubClient contains fake.fakeClient class as wrapped instance and adds event pushing to informers
 type StubClient struct {
 	wrappedClient client.Client
 	scheme        *runtime.Scheme
@@ -111,11 +112,12 @@ func (s StubClient) updateOrPatch(obj runtime.Object, ctx context.Context, f fun
 }
 
 func NewStubClient(scheme *runtime.Scheme, cache *cache.Cache, initObjs ...runtime.Object) client.Client {
-	if initObjs != nil {
+	if initObjs == nil {
 		initObjs = []runtime.Object{}
 	}
 	return &StubClient{
 		wrappedClient: fake.NewFakeClientWithScheme(scheme, initObjs...),
 		scheme:        scheme,
+		cache: *cache,
 	}
 }
