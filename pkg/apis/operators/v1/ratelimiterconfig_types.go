@@ -9,8 +9,8 @@ type ApplyTo string
 const (
 	GATEWAY          ApplyTo = "GATEWAY"
 	SIDECAR          ApplyTo = "SIDECAR"
-	SIDECAR_OUTBOUND ApplyTo = "SIDECAR_OUTBOUND"
-	SIDECAR_INBOUND  ApplyTo = "SIDECAR_INBOUND"
+	//SIDECAR_OUTBOUND ApplyTo = "SIDECAR_OUTBOUND"
+	//SIDECAR_INBOUND  ApplyTo = "SIDECAR_INBOUND"
 )
 
 type RateLimit struct {
