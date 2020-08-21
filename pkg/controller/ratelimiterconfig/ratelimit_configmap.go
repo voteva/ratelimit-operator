@@ -13,7 +13,7 @@ func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instan
 		data = make(map[string]string)
 	}
 
-	fileName := buildFileName(instance.Name)
+	fileName := buildConfigMapDataFileName(instance.Name)
 
 	for key, value := range data {
 		props := unmarshalRateLimitPropertyValue(value)
@@ -42,7 +42,7 @@ func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, in
 		return nil
 	}
 
-	fileName := buildFileName(instance.Name)
+	fileName := buildConfigMapDataFileName(instance.Name)
 	delete(data, fileName)
 
 	r.configMap.Data = data
@@ -72,6 +72,6 @@ func unmarshalRateLimitPropertyValue(data string) v1.RateLimitProperty {
 	return props
 }
 
-func buildFileName(name string) string {
+func buildConfigMapDataFileName(name string) string {
 	return name + ".yaml"
 }

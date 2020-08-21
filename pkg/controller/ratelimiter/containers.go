@@ -26,7 +26,7 @@ func buildRedisContainer(name string) corev1.Container {
 }
 
 func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
-	redisUrl := buildRedisUrl(instance)
+	redisUrl := buildRedisUrl(instance.Name)
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 
 	return corev1.Container{

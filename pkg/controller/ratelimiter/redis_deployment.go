@@ -18,12 +18,11 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 	reqLogger := log.WithValues("Instance.Name", instance.Name)
 
 	foundDeployment := &appsv1.Deployment{}
-	deploymentName := buildNameForRedis(instance)
 
-	deploymentFromInstance := buildDeploymentForRedis(instance, deploymentName)
+	deploymentFromInstance := buildDeploymentForRedis(instance)
 	_ = controllerutil.SetControllerReference(instance, deploymentFromInstance, r.scheme)
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: instance.Namespace}, foundDeployment)
+	err := r.client.Get(ctx, types.NamespacedName{Name: deploymentFromInstance.Name, Namespace: instance.Namespace}, foundDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Info("Creating a new Deployment Redis")
@@ -47,7 +46,8 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 	return reconcile.Result{}, nil
 }
 
-func buildDeploymentForRedis(instance *v1.RateLimiter, deploymentName string) *appsv1.Deployment {
+func buildDeploymentForRedis(instance *v1.RateLimiter) *appsv1.Deployment {
+	deploymentName := buildNameForRedis(instance.Name)
 	labels := utils.LabelsForApp(deploymentName)
 	replicas := int32(1)
 

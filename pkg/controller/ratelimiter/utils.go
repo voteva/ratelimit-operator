@@ -1,15 +1,14 @@
 package ratelimiter
 
 import (
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/constants"
 	"strconv"
 )
 
-func buildNameForRedis(instance *v1.RateLimiter) string {
-	return instance.Name + "-redis"
+func buildNameForRedis(name string) string {
+	return name + "-redis"
 }
 
-func buildRedisUrl(instance *v1.RateLimiter) string {
-	return buildNameForRedis(instance) + ":" + strconv.Itoa(int(constants.REDIS_PORT))
+func buildRedisUrl(name string) string {
+	return buildNameForRedis(name) + ":" + strconv.Itoa(int(constants.REDIS_PORT))
 }
