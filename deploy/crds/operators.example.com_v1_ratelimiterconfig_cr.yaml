@@ -35,11 +35,12 @@ spec:
 
 
 
-#  applyTo: "SIDECAR"
+#  applyTo: "SIDECAR_OUTBOUND"
 #  host: "endpoint-app.operator-test.svc.cluster.local"
 #  port: 80
-#  workloadSelectorLabels:
-#    app: intermediary-app
+#  workloadSelector:
+#    labels:
+#      app: intermediary-app
 #  failureModeDeny: false
 #  rateLimitProperty:
 #    domain: intermediary-app

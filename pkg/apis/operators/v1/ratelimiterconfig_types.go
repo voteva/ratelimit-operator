@@ -8,9 +8,8 @@ type ApplyTo string
 
 const (
 	GATEWAY          ApplyTo = "GATEWAY"
-	SIDECAR          ApplyTo = "SIDECAR"
-	//SIDECAR_OUTBOUND ApplyTo = "SIDECAR_OUTBOUND"
-	//SIDECAR_INBOUND  ApplyTo = "SIDECAR_INBOUND"
+	SIDECAR_OUTBOUND ApplyTo = "SIDECAR_OUTBOUND"
+	SIDECAR_INBOUND  ApplyTo = "SIDECAR_INBOUND"
 )
 
 type RateLimit struct {
@@ -36,14 +35,18 @@ type RateLimitProperty struct {
 	Descriptors []Descriptor `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
 }
 
+type WorkloadSelector struct {
+	Labels map[string]string `json:"labels"`
+}
+
 type RateLimiterConfigSpec struct {
-	ApplyTo                ApplyTo            `json:"applyTo"`
-	Host                   string             `json:"host"`
-	Port                   int32              `json:"port"`
-	WorkloadSelectorLabels *map[string]string `json:"workloadSelectorLabels,omitempty"`
-	RateLimitProperty      RateLimitProperty  `json:"rateLimitProperty,omitempty"`
-	FailureModeDeny        bool               `json:"failureModeDeny,omitempty"`
-	RateLimiter            string             `json:"rateLimiter"`
+	ApplyTo           ApplyTo           `json:"applyTo"`
+	Port              int32             `json:"port"`
+	Host              *string           `json:"host,omitempty"`
+	WorkloadSelector  *WorkloadSelector `json:"workloadSelector,omitempty"`
+	RateLimitProperty RateLimitProperty `json:"rateLimitProperty,omitempty"`
+	FailureModeDeny   bool              `json:"failureModeDeny,omitempty"`
+	RateLimiter       string            `json:"rateLimiter"`
 }
 
 type RateLimiterConfigStatus struct {

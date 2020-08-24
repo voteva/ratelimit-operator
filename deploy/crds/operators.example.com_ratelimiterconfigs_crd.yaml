@@ -92,13 +92,17 @@ spec:
                 type: object
               rateLimiter:
                 type: string
-              workloadSelectorLabels:
-                additionalProperties:
-                  type: string
+              workloadSelector:
+                properties:
+                  labels:
+                    additionalProperties:
+                      type: string
+                    type: object
+                required:
+                - labels
                 type: object
             required:
             - applyTo
-            - host
             - port
             - rateLimiter
             type: object

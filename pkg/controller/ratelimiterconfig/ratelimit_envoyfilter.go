@@ -225,22 +225,25 @@ func buildWorkloadSelectorLabels(instance *v1.RateLimiterConfig) map[string]stri
 			"istio": "ingressgateway",
 		}
 	} else {
-		return *instance.Spec.WorkloadSelectorLabels
+		return instance.Spec.WorkloadSelector.Labels
 	}
 }
 
 func buildContext(instance *v1.RateLimiterConfig) networking.EnvoyFilter_PatchContext {
-	if instance.Spec.ApplyTo == v1.SIDECAR {
+	if instance.Spec.ApplyTo == v1.SIDECAR_OUTBOUND {
 		return networking.EnvoyFilter_SIDECAR_OUTBOUND
-		//} else if instance.Spec.ApplyTo == v1.SIDECAR_INBOUND {
-		//	return networking.EnvoyFilter_SIDECAR_INBOUND
+	} else if instance.Spec.ApplyTo == v1.SIDECAR_INBOUND {
+		return networking.EnvoyFilter_SIDECAR_INBOUND
 	} else {
 		return networking.EnvoyFilter_GATEWAY
 	}
 }
 
 func buildVirtualHostName(instance *v1.RateLimiterConfig) string {
-	return fmt.Sprintf("%s:%d", instance.Spec.Host, instance.Spec.Port)
+	if instance.Spec.ApplyTo == v1.SIDECAR_INBOUND {
+		return "inbound|http|" + string(instance.Spec.Port)
+	}
+	return fmt.Sprintf("%s:%d", *instance.Spec.Host, instance.Spec.Port)
 }
 
 func buildRateLimiterServiceName(rateLimiter *v1.RateLimiter) string {

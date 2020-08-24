@@ -67,21 +67,8 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - services.example.com
-  resources:
-  - '*'
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
   - operators.example.com
   resources:
-  - '*'
   - ratelimiters
   - ratelimiterconfigs
   verbs:
@@ -97,4 +84,10 @@ rules:
   resources:
   - envoyfilters
   verbs:
-  - '*'
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

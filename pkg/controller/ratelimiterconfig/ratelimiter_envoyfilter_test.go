@@ -15,9 +15,12 @@ func Test_BuildEnvoyFilter_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build envoy filter", func(t *testing.T) {
+		host := utils.BuildRandomString(3)
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.GATEWAY,
+				Host:    &host,
+				Port:    int32(utils.BuildRandomInt(2)),
 				RateLimitProperty: v1.RateLimitProperty{
 					Domain: utils.BuildRandomString(3),
 				},
@@ -159,8 +162,12 @@ func Test_BuildVirtualHostPatch_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build virtual host patch", func(t *testing.T) {
+		host := utils.BuildRandomString(3)
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
+				ApplyTo: v1.GATEWAY,
+				Host:    &host,
+				Port:    int32(utils.BuildRandomInt(2)),
 				RateLimitProperty: v1.RateLimitProperty{
 					Descriptors: []v1.Descriptor{{
 						Key: utils.BuildRandomString(3),
@@ -261,19 +268,63 @@ func Test_BuildVirtualHostPatchValue_PathSuccess(t *testing.T) {
 	})
 }
 
-func Test_BuildVirtualHostName_Success(t *testing.T) {
+func Test_BuildVirtualHostName_Gateway(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build virtual host name", func(t *testing.T) {
+	t.Run("success build virtual host name (Gateway)", func(t *testing.T) {
+		host := utils.BuildRandomString(3)
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
-				Host: utils.BuildRandomString(3),
-				Port: int32(utils.BuildRandomInt(4)),
+				ApplyTo: v1.GATEWAY,
+				Host:    &host,
+				Port:    int32(utils.BuildRandomInt(4)),
 			},
 		}
 
-		expectedResult := fmt.Sprintf("%s:%d", rateLimiterConfig.Spec.Host, rateLimiterConfig.Spec.Port)
+		expectedResult := fmt.Sprintf("%s:%d", *rateLimiterConfig.Spec.Host, rateLimiterConfig.Spec.Port)
+		actualResult := buildVirtualHostName(rateLimiterConfig)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func Test_BuildVirtualHostName_SidecarOutbound(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build virtual host name (SidecarOutbound)", func(t *testing.T) {
+		host := utils.BuildRandomString(3)
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
+				ApplyTo: v1.SIDECAR_OUTBOUND,
+				Host:    &host,
+				Port:    int32(utils.BuildRandomInt(4)),
+			},
+		}
+
+		expectedResult := fmt.Sprintf("%s:%d", *rateLimiterConfig.Spec.Host, rateLimiterConfig.Spec.Port)
+		actualResult := buildVirtualHostName(rateLimiterConfig)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func Test_BuildVirtualHostName_SidecarInbound(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build virtual host name (SidecarInbound)", func(t *testing.T) {
+		host := utils.BuildRandomString(3)
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
+				ApplyTo: v1.SIDECAR_INBOUND,
+				Host:    &host,
+				Port:    int32(utils.BuildRandomInt(4)),
+			},
+		}
+
+		expectedResult := "inbound|http|" + string(rateLimiterConfig.Spec.Port)
 		actualResult := buildVirtualHostName(rateLimiterConfig)
 
 		a.Equal(expectedResult, actualResult)
@@ -284,7 +335,7 @@ func Test_BuildContext_Gateway(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build context (gateway)", func(t *testing.T) {
+	t.Run("success build context (Gateway)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.GATEWAY,
@@ -298,15 +349,17 @@ func Test_BuildContext_Gateway(t *testing.T) {
 	})
 }
 
-func Test_BuildContext_Sidecar(t *testing.T) {
+func Test_BuildContext_SidecarOutbound(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build context (sidecar)", func(t *testing.T) {
+	t.Run("success build context (SidecarOutbound)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
-				ApplyTo:                v1.SIDECAR,
-				WorkloadSelectorLabels: &map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
+				ApplyTo: v1.SIDECAR_OUTBOUND,
+				WorkloadSelector: &v1.WorkloadSelector{
+					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
+				},
 			},
 		}
 
@@ -317,11 +370,32 @@ func Test_BuildContext_Sidecar(t *testing.T) {
 	})
 }
 
-func Test_BuildWorkloadSelectorLabels_IngressGateway(t *testing.T) {
+func Test_BuildContext_SidecarInbound(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build workload selector labels (ingressgateway)", func(t *testing.T) {
+	t.Run("success build context (SidecarInbound)", func(t *testing.T) {
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
+				ApplyTo: v1.SIDECAR_INBOUND,
+				WorkloadSelector: &v1.WorkloadSelector{
+					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
+				},
+			},
+		}
+
+		expectedResult := networking.EnvoyFilter_SIDECAR_INBOUND
+		actualResult := buildContext(rateLimiterConfig)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func Test_BuildWorkloadSelectorLabels_Gateway(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build workload selector labels (Gateway)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.GATEWAY,
@@ -335,19 +409,42 @@ func Test_BuildWorkloadSelectorLabels_IngressGateway(t *testing.T) {
 	})
 }
 
-func Test_BuildWorkloadSelectorLabels_Sidecar(t *testing.T) {
+func Test_BuildWorkloadSelectorLabels_SidecarOutbound(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build workload selector labels (sidecar)", func(t *testing.T) {
+	t.Run("success build workload selector labels (SidecarOutbound)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
-				ApplyTo:                v1.SIDECAR,
-				WorkloadSelectorLabels: &map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
+				ApplyTo: v1.SIDECAR_OUTBOUND,
+				WorkloadSelector: &v1.WorkloadSelector{
+					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
+				},
 			},
 		}
 
-		expectedResult := *rateLimiterConfig.Spec.WorkloadSelectorLabels
+		expectedResult := rateLimiterConfig.Spec.WorkloadSelector.Labels
+		actualResult := buildWorkloadSelectorLabels(rateLimiterConfig)
+
+		a.Equal(expectedResult, actualResult)
+	})
+}
+
+func Test_BuildWorkloadSelectorLabels_SidecarInbound(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("success build workload selector labels (SidecarInbound)", func(t *testing.T) {
+		rateLimiterConfig := &v1.RateLimiterConfig{
+			Spec: v1.RateLimiterConfigSpec{
+				ApplyTo: v1.SIDECAR_INBOUND,
+				WorkloadSelector: &v1.WorkloadSelector{
+					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
+				},
+			},
+		}
+
+		expectedResult := rateLimiterConfig.Spec.WorkloadSelector.Labels
 		actualResult := buildWorkloadSelectorLabels(rateLimiterConfig)
 
 		a.Equal(expectedResult, actualResult)
