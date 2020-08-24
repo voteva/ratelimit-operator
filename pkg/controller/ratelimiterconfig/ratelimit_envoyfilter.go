@@ -220,7 +220,7 @@ func buildVirtualHostPatchValue(instance *v1.RateLimiterConfig) string {
 }
 
 func buildWorkloadSelectorLabels(instance *v1.RateLimiterConfig) map[string]string {
-	if instance.Spec.ApplyTo == v1.GATEWAY {
+	if instance.Spec.WorkloadSelector == nil || len(instance.Spec.WorkloadSelector.Labels) == 0 {
 		return map[string]string{
 			"istio": "ingressgateway",
 		}

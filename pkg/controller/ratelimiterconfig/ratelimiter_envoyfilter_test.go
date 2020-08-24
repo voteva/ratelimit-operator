@@ -391,11 +391,11 @@ func Test_BuildContext_SidecarInbound(t *testing.T) {
 	})
 }
 
-func Test_BuildWorkloadSelectorLabels_Gateway(t *testing.T) {
+func Test_BuildWorkloadSelectorLabels_NoWorkloadSelector(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build workload selector labels (Gateway)", func(t *testing.T) {
+	t.Run("success build workload selector labels (NoWorkloadSelector)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.GATEWAY,
@@ -409,35 +409,14 @@ func Test_BuildWorkloadSelectorLabels_Gateway(t *testing.T) {
 	})
 }
 
-func Test_BuildWorkloadSelectorLabels_SidecarOutbound(t *testing.T) {
+func Test_BuildWorkloadSelectorLabels_ExistsWorkloadSelector(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build workload selector labels (SidecarOutbound)", func(t *testing.T) {
+	t.Run("success build workload selector labels (ExistsWorkloadSelector)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.SIDECAR_OUTBOUND,
-				WorkloadSelector: &v1.WorkloadSelector{
-					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
-				},
-			},
-		}
-
-		expectedResult := rateLimiterConfig.Spec.WorkloadSelector.Labels
-		actualResult := buildWorkloadSelectorLabels(rateLimiterConfig)
-
-		a.Equal(expectedResult, actualResult)
-	})
-}
-
-func Test_BuildWorkloadSelectorLabels_SidecarInbound(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("success build workload selector labels (SidecarInbound)", func(t *testing.T) {
-		rateLimiterConfig := &v1.RateLimiterConfig{
-			Spec: v1.RateLimiterConfigSpec{
-				ApplyTo: v1.SIDECAR_INBOUND,
 				WorkloadSelector: &v1.WorkloadSelector{
 					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
 				},
