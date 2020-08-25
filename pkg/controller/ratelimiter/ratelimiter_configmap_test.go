@@ -1,24 +1,40 @@
 package ratelimiter
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/utils"
+	corev1 "k8s.io/api/core/v1"
 	"testing"
 )
+
+func Test_ReconcileConfigMap_Create(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile ConfigMap (Create)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		reconcileResult, err := r.reconcileConfigMap(context.Background(), rateLimiter)
+
+		foundConfigMap := &corev1.ConfigMap{}
+		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundConfigMap)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.True(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundConfigMap)
+	})
+}
 
 func Test_BuildConfigMap(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
 	t.Run("success build ConfigMap for ratelimit-service", func(t *testing.T) {
-		rateLimiter := &v1.RateLimiter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      utils.BuildRandomString(3),
-				Namespace: utils.BuildRandomString(3),
-			},
-		}
+		rateLimiter := buildRateLimiter()
 
 		actualResult := buildConfigMap(rateLimiter)
 

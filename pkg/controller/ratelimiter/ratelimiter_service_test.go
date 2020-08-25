@@ -1,35 +1,44 @@
 package ratelimiter
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/utils"
 	"testing"
 )
 
+func Test_ReconcileServiceForService_Create(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile service for ratelimit-service (Create)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		reconcileResult, err := r.reconcileServiceForService(context.Background(), rateLimiter)
+
+		foundService := &corev1.Service{}
+		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.True(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundService)
+	})
+}
+
 func Test_BuildService(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
 	t.Run("success build Service for ratelimit-service", func(t *testing.T) {
-		logLevel := v1.INFO
-		port := int32(utils.BuildRandomInt(2))
-		size := int32(utils.BuildRandomInt(1))
-
-		rateLimiter := &v1.RateLimiter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      utils.BuildRandomString(3),
-				Namespace: utils.BuildRandomString(3),
-			},
-			Spec: v1.RateLimiterSpec{
-				LogLevel: &logLevel,
-				Port:     &port,
-				Size:     &size,
-			},
-		}
+		rateLimiter := buildRateLimiter()
 
 		actualResult := buildService(rateLimiter)
 
@@ -42,4 +51,11 @@ func Test_BuildService(t *testing.T) {
 		a.Equal(*rateLimiter.Spec.Port, actualResult.Spec.Ports[0].Port)
 		a.Equal(intstr.IntOrString{Type: intstr.Int, IntVal: *rateLimiter.Spec.Port}, actualResult.Spec.Ports[0].TargetPort)
 	})
+}
+
+func buildServiceResourceNamespacedName(rateLimiter *v1.RateLimiter) types.NamespacedName {
+	return types.NamespacedName{
+		Name:      rateLimiter.Name,
+		Namespace: rateLimiter.Namespace,
+	}
 }

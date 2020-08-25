@@ -1,29 +1,55 @@
 package ratelimiter
 
 import (
-	"github.com/stretchr/testify/assert"
-	"ratelimit-operator/pkg/constants"
+	istio_v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"ratelimit-operator/pkg/apis"
+	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/utils"
-	"strconv"
-	"testing"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func Test_BuildNameForRedis(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
+func buildRateLimiter() *v1.RateLimiter {
+	logLevel := v1.INFO
+	port := int32(utils.BuildRandomInt(2))
+	size := int32(1)
 
-	t.Run("success build name for Redis", func(t *testing.T) {
-		name := utils.BuildRandomString(3)
-		a.Equal(name+"-redis", buildNameForRedis(name))
-	})
+	return &v1.RateLimiter{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      utils.BuildRandomString(3),
+			Namespace: utils.BuildRandomString(3),
+		},
+		Spec: v1.RateLimiterSpec{
+			LogLevel: &logLevel,
+			Port:     &port,
+			Size:     &size,
+		},
+		Status: v1.RateLimiterStatus{},
+	}
 }
 
-func Test_BuildRedisUrl(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
+func buildReconciler(rateLimiter *v1.RateLimiter) *ReconcileRateLimiter {
+	scheme := buildScheme()
+	objects := []runtime.Object{rateLimiter}
+	client := fake.NewFakeClientWithScheme(scheme, objects...)
+	return &ReconcileRateLimiter{client: client, scheme: scheme}
+}
 
-	t.Run("success build Redis url", func(t *testing.T) {
-		name := utils.BuildRandomString(3)
-		a.Equal(buildNameForRedis(name)+":"+strconv.Itoa(int(constants.REDIS_PORT)), buildRedisUrl(name))
-	})
+func buildEmptyReconciler() *ReconcileRateLimiter {
+	scheme := buildScheme()
+	objects := []runtime.Object{}
+	client := fake.NewFakeClientWithScheme(scheme, objects...)
+	return &ReconcileRateLimiter{client: client, scheme: scheme}
+}
+
+func buildScheme() *runtime.Scheme {
+	scheme := runtime.NewScheme()
+	_ = apis.AddToScheme(scheme)
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = apiextensionsv1beta1.AddToScheme(scheme)
+	_ = istio_v1alpha3.AddToScheme(scheme)
+	return scheme
 }

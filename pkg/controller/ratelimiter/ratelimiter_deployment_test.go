@@ -1,33 +1,41 @@
 package ratelimiter
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"ratelimit-operator/pkg/utils"
 	"testing"
 )
+
+func Test_ReconcileDeploymentForService_Create(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile deployment for ratelimit-service (Create)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		reconcileResult, err := r.reconcileDeploymentForService(context.Background(), rateLimiter)
+
+		foundDeployment := &appsv1.Deployment{}
+		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.True(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundDeployment)
+	})
+}
 
 func Test_BuildDeployment(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
 	t.Run("success build Deployment for ratelimit-service", func(t *testing.T) {
-		logLevel := v1.INFO
-		port := int32(utils.BuildRandomInt(2))
-		size := int32(utils.BuildRandomInt(1))
-
-		rateLimiter := &v1.RateLimiter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      utils.BuildRandomString(3),
-				Namespace: utils.BuildRandomString(3),
-			},
-			Spec: v1.RateLimiterSpec{
-				LogLevel: &logLevel,
-				Port:     &port,
-				Size:     &size,
-			},
-		}
+		rateLimiter := buildRateLimiter()
 
 		actualResult := buildDeploymentForService(rateLimiter)
 

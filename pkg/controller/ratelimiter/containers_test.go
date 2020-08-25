@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/constants"
 	"ratelimit-operator/pkg/utils"
 	"testing"
@@ -38,21 +36,7 @@ func Test_BuildServiceContainer(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build ratelimit-service container", func(t *testing.T) {
-		logLevel := v1.INFO
-		port := int32(utils.BuildRandomInt(2))
-		size := int32(utils.BuildRandomInt(1))
-
-		rateLimiter := &v1.RateLimiter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      utils.BuildRandomString(3),
-				Namespace: utils.BuildRandomString(3),
-			},
-			Spec: v1.RateLimiterSpec{
-				LogLevel: &logLevel,
-				Port:     &port,
-				Size:     &size,
-			},
-		}
+		rateLimiter := buildRateLimiter()
 
 		expectedCommand := []string{"sh", "-c", "/bin/startup.sh"}
 		expectedConfigMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")

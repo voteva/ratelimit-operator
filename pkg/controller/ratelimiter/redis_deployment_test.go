@@ -1,24 +1,41 @@
 package ratelimiter
 
 import (
+	"context"
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	"ratelimit-operator/pkg/utils"
 	"testing"
 )
+
+func Test_ReconcileDeploymentForRedis_Create(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile deployment for Redis (Create)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		reconcileResult, err := r.reconcileDeploymentForRedis(context.Background(), rateLimiter)
+
+		foundDeployment := &appsv1.Deployment{}
+		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.True(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundDeployment)
+	})
+}
 
 func Test_BuildDeploymentForRedis(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
 	t.Run("success build Deployment for Redis", func(t *testing.T) {
-		rateLimiter := &v1.RateLimiter{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      utils.BuildRandomString(3),
-				Namespace: utils.BuildRandomString(3),
-			},
-		}
+		rateLimiter := buildRateLimiter()
 
 		expectedDeploymentName := buildNameForRedis(rateLimiter.Name)
 		expectedLabels := utils.LabelsForApp(expectedDeploymentName)
