@@ -241,7 +241,7 @@ func buildContext(instance *v1.RateLimiterConfig) networking.EnvoyFilter_PatchCo
 
 func buildVirtualHostName(instance *v1.RateLimiterConfig) string {
 	if instance.Spec.ApplyTo == v1.SIDECAR_INBOUND {
-		return "inbound|http|" + string(instance.Spec.Port)
+		return fmt.Sprintf("%s|%d", "inbound|http", instance.Spec.Port)
 	}
 	return fmt.Sprintf("%s:%d", *instance.Spec.Host, instance.Spec.Port)
 }

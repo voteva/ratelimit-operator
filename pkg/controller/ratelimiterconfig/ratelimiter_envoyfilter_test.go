@@ -324,7 +324,7 @@ func Test_BuildVirtualHostName_SidecarInbound(t *testing.T) {
 			},
 		}
 
-		expectedResult := "inbound|http|" + string(rateLimiterConfig.Spec.Port)
+		expectedResult := fmt.Sprintf("%s|%d", "inbound|http", rateLimiterConfig.Spec.Port)
 		actualResult := buildVirtualHostName(rateLimiterConfig)
 
 		a.Equal(expectedResult, actualResult)
