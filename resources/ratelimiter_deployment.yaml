@@ -15,13 +15,35 @@ spec:
         app: rate-limiter
       annotations:
         sidecar.istio.io/inject: 'true'
+        prometheus_io_port: '9102'
+        prometheus_io_scheme: http
+        prometheus_io_scrape: 'true'
     spec:
       volumes:
         - name: config
           configMap:
             name: rate-limiter
             defaultMode: 420
+        - name: config-prom-exporter
+          configMap:
+            name: rate-limiter-prom-exporter
+            defaultMode: 420
       containers:
+        - resources: { }
+          terminationMessagePath: /dev/termination-log
+          name: prom-exporter
+          ports:
+          - containerPort: 9125
+            protocol: TCP
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: config-prom-exporter
+              mountPath: /tmp
+          terminationMessagePolicy: File
+          image: 'prom/statsd-exporter:v0.18.0'
+          args:
+            - '--statsd.mapping-config=/tmp/statsd_mapping.yml'
+            - '--log.level=info'
         - resources: {}
           terminationMessagePath: /dev/termination-log
           name: rate-limiter
@@ -45,7 +67,11 @@ spec:
             - name: RUNTIME_WATCH_ROOT
               value: 'false'
             - name: USE_STATSD
-              value: 'false'
+              value: 'true'
+            - name: STATSD_HOST
+              value: 'localhost'
+            - name: STATSD_PORT
+              value: 9125
           ports:
             - containerPort: 8081
               protocol: TCP
