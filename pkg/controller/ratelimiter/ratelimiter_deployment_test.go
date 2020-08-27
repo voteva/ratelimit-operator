@@ -30,6 +30,35 @@ func Test_ReconcileDeploymentForService_Create(t *testing.T) {
 	})
 }
 
+func Test_ReconcileDeploymentForService_Update(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile deployment for ratelimit-service (Update)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		dep := buildDeploymentForService(rateLimiter)
+		dep.Spec.Selector = nil
+		errCreateSrvRL := r.client.Create(context.Background(), dep)
+		a.Nil(errCreateSrvRL)
+
+		reconcileResult, err := r.reconcileDeploymentForService(context.Background(), rateLimiter)
+
+		foundDeployment := &appsv1.Deployment{}
+		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.False(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundDeployment)
+		a.NotNil(foundDeployment.Spec.Selector)
+		a.Equal(utils.LabelsForApp(rateLimiter.Name), foundDeployment.Spec.Selector.MatchLabels)
+	})
+}
+
 func Test_BuildDeployment(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)

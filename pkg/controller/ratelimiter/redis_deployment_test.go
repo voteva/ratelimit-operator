@@ -30,6 +30,35 @@ func Test_ReconcileDeploymentForRedis_Create(t *testing.T) {
 	})
 }
 
+func Test_ReconcileDeploymentForRedis_Update(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile deployment for Redis (Update)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		dep := buildDeploymentForRedis(rateLimiter)
+		newReplicas := int32(10)
+		dep.Spec.Replicas = &newReplicas
+		errCreateSrvRL := r.client.Create(context.Background(), dep)
+		a.Nil(errCreateSrvRL)
+
+		reconcileResult, err := r.reconcileDeploymentForRedis(context.Background(), rateLimiter)
+
+		foundDeployment := &appsv1.Deployment{}
+		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.False(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundDeployment)
+		a.Equal(int32(1), *foundDeployment.Spec.Replicas)
+	})
+}
+
 func Test_BuildDeploymentForRedis(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)

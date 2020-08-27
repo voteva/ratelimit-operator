@@ -33,6 +33,34 @@ func Test_ReconcileServiceForService_Create(t *testing.T) {
 	})
 }
 
+func Test_ReconcileServiceForService_Update(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile service for ratelimit-service (Update)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		srv := buildService(rateLimiter)
+		srv.Spec.Ports[0].Name = utils.BuildRandomString(3)
+		errCreateSrvRL := r.client.Create(context.Background(), srv)
+		a.Nil(errCreateSrvRL)
+
+		reconcileResult, err := r.reconcileServiceForService(context.Background(), rateLimiter)
+
+		foundService := &corev1.Service{}
+		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.False(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundService)
+		a.Equal("grpc-"+rateLimiter.Name, foundService.Spec.Ports[0].Name)
+	})
+}
+
 func Test_BuildService(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)

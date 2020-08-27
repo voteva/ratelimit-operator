@@ -34,6 +34,34 @@ func Test_ReconcileServiceForRedis_Create(t *testing.T) {
 	})
 }
 
+func Test_ReconcileServiceForRedis_Update(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile service for Redis (Update)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		srv := buildServiceForRedis(rateLimiter)
+		srv.Spec.Ports[0].Name = utils.BuildRandomString(3)
+		errCreateSrvRL := r.client.Create(context.Background(), srv)
+		a.Nil(errCreateSrvRL)
+
+		reconcileResult, err := r.reconcileServiceForRedis(context.Background(), rateLimiter)
+
+		foundService := &corev1.Service{}
+		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
+		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.False(reconcileResult.Requeue)
+		a.Nil(errGet)
+		a.NotNil(foundService)
+		a.Equal(buildNameForRedis(rateLimiter.Name), foundService.Spec.Ports[0].Name)
+	})
+}
+
 func Test_BuildServiceForRedis(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
