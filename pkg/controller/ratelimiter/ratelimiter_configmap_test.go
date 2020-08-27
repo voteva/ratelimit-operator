@@ -7,11 +7,11 @@ import (
 	"testing"
 )
 
-func Test_ReconcileConfigMap_Create(t *testing.T) {
+func Test_ReconcileConfigMap_CreateSuccess(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("reconcile ConfigMap (Create)", func(t *testing.T) {
+	t.Run("reconcile ConfigMap (CreateSuccess)", func(t *testing.T) {
 		rateLimiter := buildRateLimiter()
 		r := buildReconciler(rateLimiter)
 
@@ -26,6 +26,22 @@ func Test_ReconcileConfigMap_Create(t *testing.T) {
 		a.True(reconcileResult.Requeue)
 		a.Nil(errGet)
 		a.NotNil(foundConfigMap)
+	})
+}
+
+func Test_ReconcileConfigMap_CreateError(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile ConfigMap (CreateError)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		rateLimiter.Name = ""
+		rateLimiter.Namespace = ""
+		r := buildReconciler(rateLimiter)
+
+		_, err := r.reconcileConfigMap(context.Background(), rateLimiter)
+
+		a.NotNil(err)
 	})
 }
 

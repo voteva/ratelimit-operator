@@ -1,14 +1,88 @@
 package ratelimiterconfig
 
 import (
+	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	networking "istio.io/api/networking/v1alpha3"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"istio.io/client-go/pkg/apis/networking/v1alpha3"
+	"k8s.io/apimachinery/pkg/types"
 	"ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/utils"
 	"testing"
 )
+
+func Test_ReconcileEnvoyFilter_CreateSuccess(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile EnvoyFilter (CreateSuccess)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
+		reconcileResult, err := r.reconcileEnvoyFilter(context.Background(), rateLimiterConfig)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.True(reconcileResult.Requeue)
+
+		foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
+		namespaceName := types.NamespacedName{Name: rateLimiterConfig.Name, Namespace: rateLimiterConfig.Namespace}
+		errGet := r.client.Get(context.Background(), namespaceName, foundEnvoyFilter)
+
+		a.Nil(errGet)
+		a.NotNil(foundEnvoyFilter)
+	})
+}
+
+func Test_ReconcileEnvoyFilter_CreateError(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile EnvoyFilter (CreateError)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		r := buildReconciler(rateLimiter)
+
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
+		rateLimiterConfig.Name = ""
+		rateLimiterConfig.Namespace = ""
+		_, err := r.reconcileEnvoyFilter(context.Background(), rateLimiterConfig)
+
+		a.NotNil(err)
+	})
+}
+
+func Test_ReconcileEnvoyFilter_Update(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile EnvoyFilter (Update)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
+		r := buildReconciler(rateLimiter)
+
+		ef := buildEnvoyFilter(rateLimiterConfig, rateLimiter)
+		ef.Spec.WorkloadSelector = nil
+		errCreateEF := r.client.Create(context.Background(), ef)
+		a.Nil(errCreateEF)
+
+		reconcileResult, err := r.reconcileEnvoyFilter(context.Background(), rateLimiterConfig)
+
+		a.Nil(err)
+		a.NotNil(reconcileResult)
+		a.False(reconcileResult.Requeue)
+
+		foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
+		namespaceName := types.NamespacedName{Name: rateLimiterConfig.Name, Namespace: rateLimiterConfig.Namespace}
+		errGet := r.client.Get(context.Background(), namespaceName, foundEnvoyFilter)
+
+		a.Nil(errGet)
+		a.NotNil(foundEnvoyFilter)
+		a.NotNil(foundEnvoyFilter.Spec.WorkloadSelector)
+		a.Equal(buildWorkloadSelectorLabels(rateLimiterConfig), foundEnvoyFilter.Spec.WorkloadSelector.Labels)
+	})
+}
 
 func Test_BuildEnvoyFilter_Success(t *testing.T) {
 	t.Parallel()
@@ -456,13 +530,4 @@ func Test_BuildWorkAroundServiceName_Success(t *testing.T) {
 
 		a.Equal(expectedResult, actualResult)
 	})
-}
-
-func buildRateLimiter() *v1.RateLimiter {
-	return &v1.RateLimiter{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      utils.BuildRandomString(3),
-			Namespace: utils.BuildRandomString(3),
-		},
-	}
 }

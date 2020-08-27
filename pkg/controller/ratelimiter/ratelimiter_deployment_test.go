@@ -8,11 +8,11 @@ import (
 	"testing"
 )
 
-func Test_ReconcileDeploymentForService_Create(t *testing.T) {
+func Test_ReconcileDeploymentForService_CreateSuccess(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("reconcile deployment for ratelimit-service (Create)", func(t *testing.T) {
+	t.Run("reconcile deployment for ratelimit-service (CreateSuccess)", func(t *testing.T) {
 		rateLimiter := buildRateLimiter()
 		r := buildReconciler(rateLimiter)
 
@@ -27,6 +27,22 @@ func Test_ReconcileDeploymentForService_Create(t *testing.T) {
 		a.True(reconcileResult.Requeue)
 		a.Nil(errGet)
 		a.NotNil(foundDeployment)
+	})
+}
+
+func Test_ReconcileDeploymentForService_CreateError(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile deployment for ratelimit-service (CreateError)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		rateLimiter.Name = ""
+		rateLimiter.Namespace = ""
+		r := buildReconciler(rateLimiter)
+
+		_, err := r.reconcileDeploymentForService(context.Background(), rateLimiter)
+
+		a.NotNil(err)
 	})
 }
 
