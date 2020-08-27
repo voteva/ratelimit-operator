@@ -6,6 +6,7 @@ import (
 	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"ratelimit-operator/pkg/apis"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
@@ -15,23 +16,26 @@ import (
 
 func buildRateLimiterConfig(rl *v1.RateLimiter) *v1.RateLimiterConfig {
 	host := utils.BuildRandomString(3)
+	failureModeDeny := true
+	rateLimitRequestTimeout := "0.25s"
 	return &v1.RateLimiterConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.BuildRandomString(3),
 			Namespace: rl.Namespace,
 		},
 		Spec: v1.RateLimiterConfigSpec{
-			RateLimiter: rl.Name,
 			ApplyTo:     v1.GATEWAY,
 			Host:        &host,
 			Port:        int32(utils.BuildRandomInt(2)),
+			RateLimiter: rl.Name,
 			RateLimitProperty: v1.RateLimitProperty{
 				Domain: utils.BuildRandomString(3),
 				Descriptors: []v1.Descriptor{{
 					Key: utils.BuildRandomString(3),
 				}},
 			},
-			FailureModeDeny: true,
+			RateLimitRequestTimeout: &rateLimitRequestTimeout,
+			FailureModeDeny:         &failureModeDeny,
 		},
 	}
 }
@@ -95,4 +99,11 @@ func buildConfigMap(instance *v1.RateLimiter) *corev1.ConfigMap {
 		Data: map[string]string{},
 	}
 	return configMap
+}
+
+func buildNamespacedName(rateLimiterConfig *v1.RateLimiterConfig) types.NamespacedName {
+	return types.NamespacedName{
+		Name:      rateLimiterConfig.Name,
+		Namespace: rateLimiterConfig.Namespace,
+	}
 }

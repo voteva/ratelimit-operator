@@ -40,13 +40,14 @@ type WorkloadSelector struct {
 }
 
 type RateLimiterConfigSpec struct {
-	ApplyTo           ApplyTo           `json:"applyTo"`
-	Port              int32             `json:"port"`
-	Host              *string           `json:"host,omitempty"`
-	WorkloadSelector  *WorkloadSelector `json:"workloadSelector,omitempty"`
-	RateLimitProperty RateLimitProperty `json:"rateLimitProperty,omitempty"`
-	FailureModeDeny   bool              `json:"failureModeDeny,omitempty"`
-	RateLimiter       string            `json:"rateLimiter"`
+	ApplyTo                 ApplyTo           `json:"applyTo"`
+	WorkloadSelector        WorkloadSelector  `json:"workloadSelector"`
+	Port                    int32             `json:"port"`
+	Host                    *string           `json:"host,omitempty"`
+	RateLimiter             string            `json:"rateLimiter"`
+	RateLimitProperty       RateLimitProperty `json:"rateLimitProperty,omitempty"`
+	RateLimitRequestTimeout *string           `json:"rateLimitRequestTimeout,omitempty"`
+	FailureModeDeny         *bool             `json:"failureModeDeny,omitempty"`
 }
 
 type RateLimiterConfigStatus struct {

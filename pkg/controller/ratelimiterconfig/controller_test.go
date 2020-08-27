@@ -3,7 +3,6 @@ package ratelimiterconfig
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/types"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
 	"ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -118,6 +117,31 @@ func Test_Reconcile_Success(t *testing.T) {
 	})
 }
 
+func Test_Reconcile_NeedUpdateWithDefaults(t *testing.T) {
+	t.Parallel()
+	a := assert.New(t)
+
+	t.Run("reconcile (NeedUpdateWithDefaults)", func(t *testing.T) {
+		rateLimiter := buildRateLimiter()
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
+		rateLimiterConfig.Spec.FailureModeDeny = nil
+		rateLimiterConfig.Spec.RateLimitRequestTimeout = nil
+		rateLimiterConfig.Spec.RateLimiter = utils.BuildRandomString(5)
+		r := buildReconciler(rateLimiter)
+
+		errCreate := r.client.Create(context.Background(), rateLimiterConfig)
+		a.Nil(errCreate)
+
+		request := buildReconcileRequest(rateLimiterConfig)
+		_, _ = r.Reconcile(request)
+
+		errGet := r.client.Get(context.Background(), buildNamespacedName(rateLimiterConfig), rateLimiterConfig)
+		a.Nil(errGet)
+		a.Equal(false, *rateLimiterConfig.Spec.FailureModeDeny)
+		a.Equal("0.25s", *rateLimiterConfig.Spec.RateLimitRequestTimeout)
+	})
+}
+
 func Test_GetRateLimiter_Success(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
@@ -228,10 +252,5 @@ func Test_ManageCleanUpLogic_Error(t *testing.T) {
 }
 
 func buildReconcileRequest(rateLimiterConfig *v1.RateLimiterConfig) reconcile.Request {
-	return reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      rateLimiterConfig.Name,
-			Namespace: rateLimiterConfig.Namespace,
-		},
-	}
+	return reconcile.Request{NamespacedName: buildNamespacedName(rateLimiterConfig)}
 }

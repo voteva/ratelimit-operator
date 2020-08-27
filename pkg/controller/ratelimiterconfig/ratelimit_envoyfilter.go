@@ -105,10 +105,10 @@ func buildHttpFilterPatchValue(instance *v1.RateLimiterConfig, rateLimiter *v1.R
 		Name: "envoy.rate_limit",
 		Config: envoyfilter_types.Config{
 			Domain:          instance.Spec.RateLimitProperty.Domain,
-			FailureModeDeny: instance.Spec.FailureModeDeny,
+			FailureModeDeny: *instance.Spec.FailureModeDeny,
 			RateLimitService: envoyfilter_types.RateLimitService{
 				GrpcService: envoyfilter_types.GrpcService{
-					Timeout: "0.25s",
+					Timeout: *instance.Spec.RateLimitRequestTimeout,
 					EnvoyGrpc: envoyfilter_types.EnvoyGrpc{
 						ClusterName: buildWorkAroundServiceName(rateLimiter),
 					},
@@ -220,13 +220,7 @@ func buildVirtualHostPatchValue(instance *v1.RateLimiterConfig) string {
 }
 
 func buildWorkloadSelectorLabels(instance *v1.RateLimiterConfig) map[string]string {
-	if instance.Spec.WorkloadSelector == nil || len(instance.Spec.WorkloadSelector.Labels) == 0 {
-		return map[string]string{
-			"istio": "ingressgateway",
-		}
-	} else {
-		return instance.Spec.WorkloadSelector.Labels
-	}
+	return instance.Spec.WorkloadSelector.Labels
 }
 
 func buildContext(instance *v1.RateLimiterConfig) networking.EnvoyFilter_PatchContext {
