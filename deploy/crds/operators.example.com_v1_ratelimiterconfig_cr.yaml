@@ -35,6 +35,12 @@ spec:
 
 
 
+
+
+
+
+
+
 #  applyTo: "SIDECAR_OUTBOUND"
 #  host: "endpoint-app.operator-test.svc.cluster.local"
 #  port: 80
