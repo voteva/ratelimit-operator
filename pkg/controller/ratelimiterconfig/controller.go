@@ -73,6 +73,10 @@ func (r *ReconcileRateLimiterConfig) Reconcile(request reconcile.Request) (recon
 		return reconcile.Result{}, err
 	}
 
+	if isNeedUpdateWithDefaults(instance) {
+		r.client.Update(ctx, instance)
+	}
+
 	err = r.getRateLimiter(ctx, instance)
 	if err != nil {
 		reqLogger.Error(err, "Error get RateLimiter [%s]", instance.Spec.RateLimiter)
@@ -159,4 +163,20 @@ func (r *ReconcileRateLimiterConfig) manageCleanUpLogic(context context.Context,
 		return err
 	}
 	return nil
+}
+
+func isNeedUpdateWithDefaults(instance *v1.RateLimiterConfig) bool {
+	needUpdate := false
+
+	if instance.Spec.FailureModeDeny == nil {
+		defaultFailureModeDeny := false
+		instance.Spec.FailureModeDeny = &defaultFailureModeDeny
+		needUpdate = true
+	}
+	if instance.Spec.RateLimitRequestTimeout == nil {
+		defaultRateLimitRequestTimeout := "0.25s"
+		instance.Spec.RateLimitRequestTimeout = &defaultRateLimitRequestTimeout
+		needUpdate = true
+	}
+	return needUpdate
 }

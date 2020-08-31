@@ -89,24 +89,13 @@ func Test_BuildEnvoyFilter_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build envoy filter", func(t *testing.T) {
-		host := utils.BuildRandomString(3)
-		rateLimiterConfig := &v1.RateLimiterConfig{
-			Spec: v1.RateLimiterConfigSpec{
-				ApplyTo: v1.GATEWAY,
-				Host:    &host,
-				Port:    int32(utils.BuildRandomInt(2)),
-				RateLimitProperty: v1.RateLimitProperty{
-					Domain: utils.BuildRandomString(3),
-				},
-				FailureModeDeny: true,
-			},
-		}
 		rateLimiter := buildRateLimiter()
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 
 		actualPatch := buildEnvoyFilter(rateLimiterConfig, rateLimiter)
 
 		a.Equal(rateLimiterConfig.Name, actualPatch.ObjectMeta.Name)
-		a.Equal(rateLimiterConfig.Namespace, actualPatch.ObjectMeta.Name)
+		a.Equal(rateLimiterConfig.Namespace, actualPatch.ObjectMeta.Namespace)
 		a.Equal(buildWorkloadSelectorLabels(rateLimiterConfig), actualPatch.Spec.WorkloadSelector.Labels)
 		a.Equal(3, len(actualPatch.Spec.ConfigPatches))
 		a.Equal(buildHttpFilterPatch(rateLimiterConfig, rateLimiter), actualPatch.Spec.ConfigPatches[0])
@@ -120,16 +109,8 @@ func Test_BuildHttpFilterPatch_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build patch for http filter", func(t *testing.T) {
-		rateLimiterConfig := &v1.RateLimiterConfig{
-			Spec: v1.RateLimiterConfigSpec{
-				ApplyTo: v1.GATEWAY,
-				RateLimitProperty: v1.RateLimitProperty{
-					Domain: utils.BuildRandomString(3),
-				},
-				FailureModeDeny: true,
-			},
-		}
 		rateLimiter := buildRateLimiter()
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 
 		expectedObjectTypes := &networking.EnvoyFilter_EnvoyConfigObjectMatch_Listener{
 			Listener: &networking.EnvoyFilter_ListenerMatch{
@@ -159,15 +140,8 @@ func Test_BuildHttpFilterPatchValue_Success(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build patch value for http filter", func(t *testing.T) {
-		rateLimiterConfig := &v1.RateLimiterConfig{
-			Spec: v1.RateLimiterConfigSpec{
-				RateLimitProperty: v1.RateLimitProperty{
-					Domain: utils.BuildRandomString(3),
-				},
-				FailureModeDeny: true,
-			},
-		}
 		rateLimiter := buildRateLimiter()
+		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 
 		expectedPatchValue := fmt.Sprintf(`
           config:
@@ -431,7 +405,7 @@ func Test_BuildContext_SidecarOutbound(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.SIDECAR_OUTBOUND,
-				WorkloadSelector: &v1.WorkloadSelector{
+				WorkloadSelector: v1.WorkloadSelector{
 					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
 				},
 			},
@@ -452,7 +426,7 @@ func Test_BuildContext_SidecarInbound(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.SIDECAR_INBOUND,
-				WorkloadSelector: &v1.WorkloadSelector{
+				WorkloadSelector: v1.WorkloadSelector{
 					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
 				},
 			},
@@ -465,18 +439,21 @@ func Test_BuildContext_SidecarInbound(t *testing.T) {
 	})
 }
 
-func Test_BuildWorkloadSelectorLabels_NoWorkloadSelector(t *testing.T) {
+func Test_BuildWorkloadSelectorLabels_EmptyWorkloadSelector(t *testing.T) {
 	t.Parallel()
 	a := assert.New(t)
 
-	t.Run("success build workload selector labels (NoWorkloadSelector)", func(t *testing.T) {
+	t.Run("success build workload selector labels (EmptyWorkloadSelector)", func(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.GATEWAY,
+				WorkloadSelector: v1.WorkloadSelector{
+					Labels: map[string]string{},
+				},
 			},
 		}
 
-		expectedResult := map[string]string{"istio": "ingressgateway"}
+		expectedResult := map[string]string{}
 		actualResult := buildWorkloadSelectorLabels(rateLimiterConfig)
 
 		a.Equal(expectedResult, actualResult)
@@ -491,7 +468,7 @@ func Test_BuildWorkloadSelectorLabels_ExistsWorkloadSelector(t *testing.T) {
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
 				ApplyTo: v1.SIDECAR_OUTBOUND,
-				WorkloadSelector: &v1.WorkloadSelector{
+				WorkloadSelector: v1.WorkloadSelector{
 					Labels: map[string]string{utils.BuildRandomString(3): utils.BuildRandomString(3)},
 				},
 			},

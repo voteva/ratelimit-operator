@@ -32,12 +32,21 @@ spec:
             description: RateLimiterSpec defines the desired state of RateLimiter
             properties:
               logLevel:
+                enum:
+                - DEBUG
+                - INFO
+                - WARN
+                - ERROR
                 type: string
               port:
                 format: int32
+                maximum: 65535
+                minimum: 0
                 type: integer
               size:
                 format: int32
+                maximum: 10
+                minimum: 0
                 type: integer
             type: object
           status:

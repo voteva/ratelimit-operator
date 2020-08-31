@@ -8,6 +8,9 @@ spec:
   host: "host-info-srv.org"
   port: 80
   failureModeDeny: false
+  workloadSelector:
+    labels:
+      istio: ingressgateway
   rateLimitProperty:
     domain: host-info
     descriptors:
@@ -16,6 +19,10 @@ spec:
         rate_limit:
           unit: minute
           requests_per_unit: 1
+
+
+
+
 
 
 

@@ -183,12 +183,18 @@ func (in *RateLimiterConfigSpec) DeepCopyInto(out *RateLimiterConfigSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.WorkloadSelector != nil {
-		in, out := &in.WorkloadSelector, &out.WorkloadSelector
-		*out = new(WorkloadSelector)
-		(*in).DeepCopyInto(*out)
+	if in.RateLimitRequestTimeout != nil {
+		in, out := &in.RateLimitRequestTimeout, &out.RateLimitRequestTimeout
+		*out = new(string)
+		**out = **in
 	}
 	in.RateLimitProperty.DeepCopyInto(&out.RateLimitProperty)
+	if in.FailureModeDeny != nil {
+		in, out := &in.FailureModeDeny, &out.FailureModeDeny
+		*out = new(bool)
+		**out = **in
+	}
+	in.WorkloadSelector.DeepCopyInto(&out.WorkloadSelector)
 	return
 }
 

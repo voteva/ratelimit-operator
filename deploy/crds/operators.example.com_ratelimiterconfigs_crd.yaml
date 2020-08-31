@@ -31,13 +31,21 @@ spec:
           spec:
             properties:
               applyTo:
+                enum:
+                - GATEWAY
+                - SIDECAR_INBOUND
+                - SIDECAR_OUTBOUND
                 type: string
               failureModeDeny:
                 type: boolean
               host:
+                maxLength: 255
+                minLength: 1
                 type: string
               port:
                 format: int32
+                maximum: 65535
+                minimum: 0
                 type: integer
               rateLimitProperty:
                 properties:
@@ -48,49 +56,76 @@ spec:
                           items:
                             properties:
                               key:
+                                maxLength: 255
+                                minLength: 1
                                 type: string
                               rate_limit:
                                 properties:
                                   requests_per_unit:
                                     format: int32
+                                    minimum: 0
                                     type: integer
                                   unit:
+                                    enum:
+                                    - second
+                                    - minute
+                                    - hour
+                                    - day
                                     type: string
                                 required:
                                 - requests_per_unit
                                 - unit
                                 type: object
                               value:
+                                maxLength: 255
+                                minLength: 1
                                 type: string
                             required:
                             - key
                             type: object
                           type: array
                         key:
+                          maxLength: 255
+                          minLength: 1
                           type: string
                         rate_limit:
                           properties:
                             requests_per_unit:
                               format: int32
+                              minimum: 0
                               type: integer
                             unit:
+                              enum:
+                              - second
+                              - minute
+                              - hour
+                              - day
                               type: string
                           required:
                           - requests_per_unit
                           - unit
                           type: object
                         value:
+                          maxLength: 255
+                          minLength: 1
                           type: string
                       required:
                       - key
                       type: object
                     type: array
                   domain:
+                    maxLength: 255
+                    minLength: 4
                     type: string
                 required:
                 - domain
                 type: object
+              rateLimitRequestTimeout:
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+                type: string
               rateLimiter:
+                maxLength: 255
+                minLength: 1
                 type: string
               workloadSelector:
                 properties:
@@ -105,6 +140,7 @@ spec:
             - applyTo
             - port
             - rateLimiter
+            - workloadSelector
             type: object
           status:
             type: object
