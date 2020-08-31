@@ -2,3 +2,5 @@
 * text=auto
 # Declare files that will always have CRLF line endings on checkout.
 *.sh text eol=lf
+build/bin/entrypoint text eol=lf
+build/bin/user_setup text eol=lf
