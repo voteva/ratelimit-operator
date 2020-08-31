@@ -25,6 +25,25 @@ func buildRedisContainer(name string) corev1.Container {
 	}
 }
 
+func buildStatsdExporterContainer(name string) corev1.Container {
+	return corev1.Container{
+		Name:  name,
+		Image: constants.STATSD_EXPORTER_IMAGE,
+		Ports: []corev1.ContainerPort{{
+			ContainerPort: constants.DEFAULT_STATSD_PORT,
+			Protocol:      corev1.ProtocolTCP,
+		}},
+		Args: []string{
+			fmt.Sprint("--statsd.mapping-config=%s/%s", constants.DEFAULT_STATSD_MAPPING_DIR, constants.DEFAULT_STATSD_MAPPING_FILE),
+			fmt.Sprint("--log.level=%s", constants.DEFALT_STATSD_LOGLEVEL),
+		},
+		VolumeMounts: []corev1.VolumeMount{{
+			Name:      "config-statsd-exporter",
+			MountPath: constants.DEFAULT_STATSD_MAPPING_DIR,
+		}},
+	}
+}
+
 func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
 	redisUrl := buildRedisUrl(instance.Name)
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")

@@ -79,6 +79,7 @@ func buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
 					}},
 					Containers: []corev1.Container{
 						buildServiceContainer(instance),
+						buildStatsdExporterContainer("statsd-exporter"),
 					},
 				},
 			},
