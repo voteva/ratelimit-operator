@@ -34,8 +34,8 @@ func buildStatsdExporterContainer(name string) corev1.Container {
 			Protocol:      corev1.ProtocolTCP,
 		}},
 		Args: []string{
-			fmt.Sprint("--statsd.mapping-config=%s/%s", constants.DEFAULT_STATSD_MAPPING_DIR, constants.DEFAULT_STATSD_MAPPING_FILE),
-			fmt.Sprint("--log.level=%s", constants.DEFALT_STATSD_LOGLEVEL),
+			fmt.Sprintf("--statsd.mapping-config=%s/%s", constants.DEFAULT_STATSD_MAPPING_DIR, constants.DEFAULT_STATSD_MAPPING_FILE),
+			fmt.Sprintf("--log.level=%s", constants.DEFALT_STATSD_LOGLEVEL),
 		},
 		VolumeMounts: []corev1.VolumeMount{{
 			Name:      "config-statsd-exporter",
@@ -91,7 +91,13 @@ func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
 			},
 			{
 				Name:  "USE_STATSD",
-				Value: "false",
+				Value: "true",
+			}, {
+				Name:  "STATSD_HOST",
+				Value: "localhost",
+			}, {
+				Name:  "STATSD_PORT",
+				Value: "9125",
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{{

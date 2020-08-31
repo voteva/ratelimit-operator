@@ -26,7 +26,7 @@ spec:
             defaultMode: 420
         - name: config-prom-exporter
           configMap:
-            name: rate-limiter-prom-exporter
+            name: rate-limiter-statsd-exporter
             defaultMode: 420
       containers:
         - resources: { }
