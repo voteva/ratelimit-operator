@@ -17,6 +17,6 @@ func BuildRandomString(length int) string {
 	return string(b)
 }
 
-func BuildRandomInt(length int) int {
-	return rand.Intn(length)
+func BuildRandomInt(upperBoundExclusive int) int {
+	return rand.Intn(upperBoundExclusive)
 }
