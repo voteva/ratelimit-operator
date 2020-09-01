@@ -5,6 +5,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"ratelimit-operator/pkg/constants"
+	"ratelimit-operator/pkg/controller/common"
 
 	"ratelimit-operator/pkg/apis/operators/v1"
 
@@ -36,31 +37,31 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1.RateLimiter{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(
+		&source.Kind{Type: &v1.RateLimiter{}},
+		&handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &appsv1.Deployment{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &v1.RateLimiter{},
-	})
+	err = c.Watch(
+		&source.Kind{Type: &appsv1.Deployment{}},
+		&handler.EnqueueRequestForOwner{IsController: true, OwnerType: &v1.RateLimiter{}})
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &v1.RateLimiter{},
-	})
+	err = c.Watch(
+		&source.Kind{Type: &corev1.Service{}},
+		&handler.EnqueueRequestForOwner{IsController: true, OwnerType: &v1.RateLimiter{}})
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &v1.RateLimiter{},
-	})
+	err = c.Watch(
+		&source.Kind{Type: &corev1.ConfigMap{}},
+		&handler.EnqueueRequestForOwner{IsController: true, OwnerType: &v1.RateLimiter{}},
+		common.DeleteConfigMapPredicate)
 	if err != nil {
 		return err
 	}

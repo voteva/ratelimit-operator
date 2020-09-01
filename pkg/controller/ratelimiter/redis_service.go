@@ -39,6 +39,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, ins
 	}
 
 	if !equality.Semantic.DeepEqual(foundService.Spec, serviceFromInstance.Spec) {
+		serviceFromInstance.Spec.ClusterIP = foundService.Spec.ClusterIP
 		foundService.Spec = serviceFromInstance.Spec
 		r.client.Update(ctx, foundService)
 	}

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"ratelimit-operator/pkg/controller/configmapwatcher"
 	"ratelimit-operator/pkg/controller/ratelimiterconfig"
 	"ratelimit-operator/pkg/controller/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -13,6 +14,7 @@ var AddToManagerFuncs []func(manager.Manager) error
 func AddToManager(m manager.Manager) error {
 	AddToManagerFuncs = append(AddToManagerFuncs, ratelimiter.Add)
 	AddToManagerFuncs = append(AddToManagerFuncs, ratelimiterconfig.Add)
+	AddToManagerFuncs = append(AddToManagerFuncs, configmapwatcher.Add)
 
 	for _, f := range AddToManagerFuncs {
 		if err := f(m); err != nil {

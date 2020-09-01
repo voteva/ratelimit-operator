@@ -35,15 +35,16 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1.RateLimiterConfig{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(
+		&source.Kind{Type: &v1.RateLimiterConfig{}},
+		&handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &v1alpha3.EnvoyFilter{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &v1.RateLimiterConfig{},
-	})
+	err = c.Watch(
+		&source.Kind{Type: &v1alpha3.EnvoyFilter{}},
+		&handler.EnqueueRequestForOwner{IsController: true, OwnerType: &v1.RateLimiterConfig{}})
 	if err != nil {
 		return err
 	}
