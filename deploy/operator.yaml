@@ -12,7 +12,7 @@ spec:
       labels:
         name: ratelimit-operator
       annotations:
-        prometheus_io_port: '8686'
+        prometheus_io_port: '8383'
         prometheus_io_scheme: http
         prometheus_io_scrape: 'true'
     spec:

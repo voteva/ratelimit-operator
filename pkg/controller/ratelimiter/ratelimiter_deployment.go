@@ -63,7 +63,7 @@ func buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      labels,
-					Annotations: utils.AnnotationSidecarIstio(),
+					Annotations: utils.Merge(utils.AnnotationSidecarIstio(), utils.AnnotationMetricsIstio(9102)),
 				},
 				Spec: corev1.PodSpec{
 					Volumes: []corev1.Volume{{
@@ -76,9 +76,21 @@ func buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
 								DefaultMode: &defaultMode,
 							},
 						},
-					}},
+					},
+						{
+							Name: "config-statsd-exporter",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "rate-limiter-statsd-exporter",
+									},
+									DefaultMode: &defaultMode,
+								}},
+						},
+					},
 					Containers: []corev1.Container{
 						buildServiceContainer(instance),
+						buildStatsdExporterContainer("statsd-exporter"),
 					},
 				},
 			},

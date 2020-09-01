@@ -26,7 +26,7 @@ spec:
             defaultMode: 420
         - name: config-prom-exporter
           configMap:
-            name: rate-limiter-prom-exporter
+            name: rate-limiter-statsd-exporter
             defaultMode: 420
       containers:
         - resources: { }
@@ -37,7 +37,7 @@ spec:
             protocol: TCP
           imagePullPolicy: Always
           volumeMounts:
-            - name: config-prom-exporter
+            - name: config-statsd-exporter
               mountPath: /tmp
           terminationMessagePolicy: File
           image: 'prom/statsd-exporter:v0.18.0'
