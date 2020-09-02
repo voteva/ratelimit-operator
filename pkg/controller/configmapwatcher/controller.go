@@ -90,17 +90,31 @@ func (r *ReconcileConfigMapWatcher) reconcileConfigMap(ctx context.Context, inst
 		}
 	}
 
-	opts := []client.ListOption{client.InNamespace(instance.Namespace)}
-	list := &v1.RateLimiterConfigList{}
-	err = r.client.List(ctx, list, opts...)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
+	list, err := r.getRateLimiterLists(ctx, instance)
+	if err != nil || list == nil {
 		return reconcile.Result{}, err
 	}
 
-	data := foundConfigMap.Data
+	r.updateConfigMap(ctx, foundConfigMap, list)
+
+	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileConfigMapWatcher) getRateLimiterLists(ctx context.Context, instance *v1.RateLimiter) (*v1.RateLimiterConfigList, error) {
+	opts := []client.ListOption{client.InNamespace(instance.Namespace)}
+	list := &v1.RateLimiterConfigList{}
+	err := r.client.List(ctx, list, opts...)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return list, err
+}
+
+func (r *ReconcileConfigMapWatcher) updateConfigMap(ctx context.Context, configMap *corev1.ConfigMap, list *v1.RateLimiterConfigList) {
+	data := configMap.Data
 	if data == nil {
 		data = make(map[string]string)
 	}
@@ -118,11 +132,9 @@ func (r *ReconcileConfigMapWatcher) reconcileConfigMap(ctx context.Context, inst
 	}
 
 	if needUpdate {
-		foundConfigMap.Data = data
-		r.client.Update(ctx, foundConfigMap)
+		configMap.Data = data
+		r.client.Update(ctx, configMap)
 	}
-
-	return reconcile.Result{}, nil
 }
 
 func buildRateLimitPropertyValue(prop v1.RateLimitProperty) string {
