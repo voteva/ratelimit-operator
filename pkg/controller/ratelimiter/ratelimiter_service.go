@@ -21,11 +21,11 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 	serviceFromInstance := buildService(instance)
 	_ = controllerutil.SetControllerReference(instance, serviceFromInstance, r.scheme)
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Info("Creating a new Service")
-			err = r.client.Create(ctx, serviceFromInstance)
+			err = r.Client.Create(ctx, serviceFromInstance)
 			if err != nil {
 				reqLogger.Error(err, "Failed to create new Service")
 				return reconcile.Result{}, err
@@ -41,7 +41,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 		serviceFromInstance.Spec.ClusterIP = foundService.Spec.ClusterIP
 		foundService.Spec = serviceFromInstance.Spec
 
-		r.client.Update(ctx, foundService)
+		r.Client.Update(ctx, foundService)
 	}
 
 	return reconcile.Result{}, nil

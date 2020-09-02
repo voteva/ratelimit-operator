@@ -28,7 +28,7 @@ func Add(mgr manager.Manager) error {
 }
 
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileRateLimiter{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileRateLimiter{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}
 }
 
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
@@ -72,15 +72,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 var _ reconcile.Reconciler = &ReconcileRateLimiter{}
 
 type ReconcileRateLimiter struct {
-	client client.Client
-	scheme *runtime.Scheme
+	Client client.Client
+	Scheme *runtime.Scheme
 }
 
-func (r *ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.TODO()
 
 	instance := &v1.RateLimiter{}
-	err := r.client.Get(ctx, request.NamespacedName, instance)
+	err := r.Client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil

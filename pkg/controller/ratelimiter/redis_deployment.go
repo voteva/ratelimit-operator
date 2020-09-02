@@ -22,11 +22,11 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 	deploymentFromInstance := buildDeploymentForRedis(instance)
 	_ = controllerutil.SetControllerReference(instance, deploymentFromInstance, r.scheme)
 
-	err := r.client.Get(ctx, types.NamespacedName{Name: deploymentFromInstance.Name, Namespace: instance.Namespace}, foundDeployment)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: deploymentFromInstance.Name, Namespace: instance.Namespace}, foundDeployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Info("Creating a new Deployment Redis")
-			err = r.client.Create(ctx, deploymentFromInstance)
+			err = r.Client.Create(ctx, deploymentFromInstance)
 			if err != nil {
 				reqLogger.Error(err, "Failed to create new Deployment Redis")
 				return reconcile.Result{}, err
@@ -40,7 +40,7 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 
 	if !equality.Semantic.DeepEqual(foundDeployment.Spec, deploymentFromInstance.Spec) {
 		foundDeployment.Spec = deploymentFromInstance.Spec
-		r.client.Update(ctx, foundDeployment)
+		r.Client.Update(ctx, foundDeployment)
 	}
 
 	return reconcile.Result{}, nil

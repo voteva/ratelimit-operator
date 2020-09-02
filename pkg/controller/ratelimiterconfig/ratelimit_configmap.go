@@ -28,7 +28,7 @@ func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instan
 
 	r.configMap.Data = data
 
-	err := r.client.Update(ctx, r.configMap)
+	err := r.Client.Update(ctx, r.configMap)
 	if err != nil {
 		log.Error(err, "Failed to update Config Map")
 		return reconcile.Result{}, err
@@ -47,7 +47,7 @@ func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, in
 
 	r.configMap.Data = data
 
-	err := r.client.Update(ctx, r.configMap)
+	err := r.Client.Update(ctx, r.configMap)
 	if err != nil {
 		log.Error(err, "Failed to delete keys from Config Map for RateLimiterConfig [%s]", instance.Name)
 		return err
