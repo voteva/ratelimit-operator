@@ -24,7 +24,7 @@ func Test_ReconcileServiceForRedis_Create(t *testing.T) {
 
 		foundService := &corev1.Service{}
 		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundService)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
@@ -44,14 +44,14 @@ func Test_ReconcileServiceForRedis_Update(t *testing.T) {
 
 		srv := buildServiceForRedis(rateLimiter)
 		srv.Spec.Ports[0].Name = utils.BuildRandomString(3)
-		errCreateSrvRL := r.client.Create(context.Background(), srv)
+		errCreateSrvRL := r.Client.Create(context.Background(), srv)
 		a.Nil(errCreateSrvRL)
 
 		reconcileResult, err := r.reconcileServiceForRedis(context.Background(), rateLimiter)
 
 		foundService := &corev1.Service{}
 		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundService)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)

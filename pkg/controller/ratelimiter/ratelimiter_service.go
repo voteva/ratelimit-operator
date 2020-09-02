@@ -19,7 +19,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 
 	foundService := &corev1.Service{}
 	serviceFromInstance := buildService(instance)
-	_ = controllerutil.SetControllerReference(instance, serviceFromInstance, r.scheme)
+	_ = controllerutil.SetControllerReference(instance, serviceFromInstance, r.Scheme)
 
 	err := r.Client.Get(ctx, types.NamespacedName{Name: instance.Name, Namespace: instance.Namespace}, foundService)
 	if err != nil {

@@ -38,7 +38,7 @@ func Test_Reconcile_NeedUpdateWithDefaults(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
 		a.Nil(errCreate)
 
 		reconcileResult, err := r.Reconcile(request)
@@ -46,7 +46,7 @@ func Test_Reconcile_NeedUpdateWithDefaults(t *testing.T) {
 		a.NotNil(reconcileResult)
 		a.True(reconcileResult.Requeue)
 
-		errGet := r.client.Get(context.Background(), buildNamespacedName(rateLimiter), rateLimiter)
+		errGet := r.Client.Get(context.Background(), buildNamespacedName(rateLimiter), rateLimiter)
 		a.Nil(errGet)
 		a.Equal(v1.WARN, *rateLimiter.Spec.LogLevel)
 		a.Equal(int32(8081), *rateLimiter.Spec.Port)
@@ -63,7 +63,7 @@ func Test_Reconcile_ReconcileConfigMap(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
 		a.Nil(errCreate)
 
 		reconcileResult, err := r.Reconcile(request)
@@ -83,8 +83,8 @@ func Test_Reconcile_DeploymentForRedis(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
 
 		a.Nil(errCreate)
 		a.Nil(errCreateCM)
@@ -106,9 +106,9 @@ func Test_Reconcile_ServiceForRedis(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
-		errCreateDepRedis := r.client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreateDepRedis := r.Client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
 
 		a.Nil(errCreate)
 		a.Nil(errCreateCM)
@@ -131,10 +131,10 @@ func Test_Reconcile_DeploymentForService(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
-		errCreateDepRedis := r.client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
-		errCreateSrvRedis := r.client.Create(context.Background(), buildServiceForRedis(rateLimiter))
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreateDepRedis := r.Client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
+		errCreateSrvRedis := r.Client.Create(context.Background(), buildServiceForRedis(rateLimiter))
 
 		a.Nil(errCreate)
 		a.Nil(errCreateCM)
@@ -158,11 +158,11 @@ func Test_Reconcile_ServiceForService(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
-		errCreateDepRedis := r.client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
-		errCreateSrvRedis := r.client.Create(context.Background(), buildServiceForRedis(rateLimiter))
-		errCreateDepRL := r.client.Create(context.Background(), buildDeploymentForService(rateLimiter))
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreateDepRedis := r.Client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
+		errCreateSrvRedis := r.Client.Create(context.Background(), buildServiceForRedis(rateLimiter))
+		errCreateDepRL := r.Client.Create(context.Background(), buildDeploymentForService(rateLimiter))
 
 		a.Nil(errCreate)
 		a.Nil(errCreateCM)
@@ -187,12 +187,12 @@ func Test_Reconcile_Success(t *testing.T) {
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
 
-		errCreate := r.client.Create(context.Background(), rateLimiter)
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
-		errCreateDepRedis := r.client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
-		errCreateSrvRedis := r.client.Create(context.Background(), buildServiceForRedis(rateLimiter))
-		errCreateDepRL := r.client.Create(context.Background(), buildDeploymentForService(rateLimiter))
-		errCreateSrvRL := r.client.Create(context.Background(), buildService(rateLimiter))
+		errCreate := r.Client.Create(context.Background(), rateLimiter)
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreateDepRedis := r.Client.Create(context.Background(), buildDeploymentForRedis(rateLimiter))
+		errCreateSrvRedis := r.Client.Create(context.Background(), buildServiceForRedis(rateLimiter))
+		errCreateDepRL := r.Client.Create(context.Background(), buildDeploymentForService(rateLimiter))
+		errCreateSrvRL := r.Client.Create(context.Background(), buildService(rateLimiter))
 
 		a.Nil(errCreate)
 		a.Nil(errCreateCM)

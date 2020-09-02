@@ -20,7 +20,7 @@ func Test_ReconcileDeploymentForRedis_Create(t *testing.T) {
 
 		foundDeployment := &appsv1.Deployment{}
 		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundDeployment)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
@@ -41,14 +41,14 @@ func Test_ReconcileDeploymentForRedis_Update(t *testing.T) {
 		dep := buildDeploymentForRedis(rateLimiter)
 		newReplicas := int32(10)
 		dep.Spec.Replicas = &newReplicas
-		errCreateSrvRL := r.client.Create(context.Background(), dep)
+		errCreateSrvRL := r.Client.Create(context.Background(), dep)
 		a.Nil(errCreateSrvRL)
 
 		reconcileResult, err := r.reconcileDeploymentForRedis(context.Background(), rateLimiter)
 
 		foundDeployment := &appsv1.Deployment{}
 		namespaceName := buildRedisResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundDeployment)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)

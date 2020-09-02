@@ -35,14 +35,14 @@ func buildReconciler(rateLimiter *v1.RateLimiter) *ReconcileRateLimiter {
 	scheme := buildScheme()
 	objects := []runtime.Object{rateLimiter}
 	client := fake.NewFakeClientWithScheme(scheme, objects...)
-	return &ReconcileRateLimiter{client: client, scheme: scheme}
+	return &ReconcileRateLimiter{Client: client, Scheme: scheme}
 }
 
 func buildEmptyReconciler() *ReconcileRateLimiter {
 	scheme := buildScheme()
 	objects := []runtime.Object{}
 	client := fake.NewFakeClientWithScheme(scheme, objects...)
-	return &ReconcileRateLimiter{client: client, scheme: scheme}
+	return &ReconcileRateLimiter{Client: client, Scheme: scheme}
 }
 
 func buildScheme() *runtime.Scheme {

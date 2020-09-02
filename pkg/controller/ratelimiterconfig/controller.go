@@ -16,7 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 var controllerName = "controller_ratelimiter_config"
@@ -82,19 +81,13 @@ func (r *ReconcileRateLimiterConfig) Reconcile(request reconcile.Request) (recon
 	err = r.getRateLimiter(ctx, instance)
 	if err != nil {
 		reqLogger.Error(err, "Error get RateLimiter [%s]. Requeue", instance.Spec.RateLimiter)
-		return reconcile.Result{
-			Requeue:      true,
-			RequeueAfter: time.Second * 5,
-		}, nil
+		return reconcile.Result{}, err
 	}
 
 	err = r.getRateLimiterConfigMap(ctx, instance)
 	if err != nil {
 		reqLogger.Error(err, "Error get RateLimiter ConfigMap [%s]. Requeue", instance.Spec.RateLimiter)
-		return reconcile.Result{
-			Requeue:      true,
-			RequeueAfter: time.Second * 5,
-		}, nil
+		return reconcile.Result{}, err
 	}
 
 	if result, err := r.updateConfigMap(ctx, instance); err != nil || result.Requeue {

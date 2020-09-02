@@ -89,7 +89,7 @@ func (r ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Re
 	}
 
 	if isNeedUpdateWithDefaults(instance) {
-		r.client.Update(ctx, instance)
+		r.Client.Update(ctx, instance)
 	}
 
 	if result, err := r.reconcileConfigMap(ctx, instance); err != nil || result.Requeue {

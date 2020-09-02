@@ -37,7 +37,7 @@ func Test_Reconcile_NotFoundRateLimiter(t *testing.T) {
 		rateLimiterConfig.Spec.RateLimiter = utils.BuildRandomString(5)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), rateLimiterConfig)
+		errCreate := r.Client.Create(context.Background(), rateLimiterConfig)
 		a.Nil(errCreate)
 
 		request := buildReconcileRequest(rateLimiterConfig)
@@ -57,7 +57,7 @@ func Test_Reconcile_NotFoundConfigMap(t *testing.T) {
 		request := buildReconcileRequest(rateLimiterConfig)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), rateLimiterConfig)
+		errCreate := r.Client.Create(context.Background(), rateLimiterConfig)
 		a.Nil(errCreate)
 
 		_, err := r.Reconcile(request)
@@ -76,10 +76,10 @@ func Test_Reconcile_CreatedEnvoyFilter(t *testing.T) {
 		request := buildReconcileRequest(rateLimiterConfig)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), rateLimiterConfig)
+		errCreate := r.Client.Create(context.Background(), rateLimiterConfig)
 		a.Nil(errCreate)
 
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
 		a.Nil(errCreateCM)
 
 		reconcileResult, err := r.Reconcile(request)
@@ -100,13 +100,13 @@ func Test_Reconcile_Success(t *testing.T) {
 		request := buildReconcileRequest(rateLimiterConfig)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), rateLimiterConfig)
+		errCreate := r.Client.Create(context.Background(), rateLimiterConfig)
 		a.Nil(errCreate)
 
-		errCreateCM := r.client.Create(context.Background(), buildConfigMap(rateLimiter))
+		errCreateCM := r.Client.Create(context.Background(), buildConfigMap(rateLimiter))
 		a.Nil(errCreateCM)
 
-		errCreateEF := r.client.Create(context.Background(), buildEnvoyFilter(rateLimiterConfig, rateLimiter))
+		errCreateEF := r.Client.Create(context.Background(), buildEnvoyFilter(rateLimiterConfig, rateLimiter))
 		a.Nil(errCreateEF)
 
 		reconcileResult, err := r.Reconcile(request)
@@ -129,13 +129,13 @@ func Test_Reconcile_NeedUpdateWithDefaults(t *testing.T) {
 		rateLimiterConfig.Spec.RateLimiter = utils.BuildRandomString(5)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), rateLimiterConfig)
+		errCreate := r.Client.Create(context.Background(), rateLimiterConfig)
 		a.Nil(errCreate)
 
 		request := buildReconcileRequest(rateLimiterConfig)
 		_, _ = r.Reconcile(request)
 
-		errGet := r.client.Get(context.Background(), buildNamespacedName(rateLimiterConfig), rateLimiterConfig)
+		errGet := r.Client.Get(context.Background(), buildNamespacedName(rateLimiterConfig), rateLimiterConfig)
 		a.Nil(errGet)
 		a.Equal(false, *rateLimiterConfig.Spec.FailureModeDeny)
 		a.Equal("0.25s", *rateLimiterConfig.Spec.RateLimitRequestTimeout)
@@ -182,7 +182,7 @@ func Test_GetRateLimiterConfigMap_Success(t *testing.T) {
 		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), r.configMap)
+		errCreate := r.Client.Create(context.Background(), r.configMap)
 		a.Nil(errCreate)
 
 		err := r.getRateLimiterConfigMap(context.Background(), rateLimiterConfig)
@@ -227,7 +227,7 @@ func Test_ManageCleanUpLogic_Success(t *testing.T) {
 		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), r.configMap)
+		errCreate := r.Client.Create(context.Background(), r.configMap)
 		a.Nil(errCreate)
 
 		err := r.manageCleanUpLogic(context.Background(), rateLimiterConfig)

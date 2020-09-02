@@ -29,7 +29,7 @@ func Test_ReconcileEnvoyFilter_CreateSuccess(t *testing.T) {
 
 		foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
 		namespaceName := types.NamespacedName{Name: rateLimiterConfig.Name, Namespace: rateLimiterConfig.Namespace}
-		errGet := r.client.Get(context.Background(), namespaceName, foundEnvoyFilter)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundEnvoyFilter)
 
 		a.Nil(errGet)
 		a.NotNil(foundEnvoyFilter)
@@ -64,7 +64,7 @@ func Test_ReconcileEnvoyFilter_Update(t *testing.T) {
 
 		ef := buildEnvoyFilter(rateLimiterConfig, rateLimiter)
 		ef.Spec.WorkloadSelector = nil
-		errCreateEF := r.client.Create(context.Background(), ef)
+		errCreateEF := r.Client.Create(context.Background(), ef)
 		a.Nil(errCreateEF)
 
 		reconcileResult, err := r.reconcileEnvoyFilter(context.Background(), rateLimiterConfig)
@@ -75,7 +75,7 @@ func Test_ReconcileEnvoyFilter_Update(t *testing.T) {
 
 		foundEnvoyFilter := &v1alpha3.EnvoyFilter{}
 		namespaceName := types.NamespacedName{Name: rateLimiterConfig.Name, Namespace: rateLimiterConfig.Namespace}
-		errGet := r.client.Get(context.Background(), namespaceName, foundEnvoyFilter)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundEnvoyFilter)
 
 		a.Nil(errGet)
 		a.NotNil(foundEnvoyFilter)

@@ -20,7 +20,7 @@ func (r *ReconcileRateLimiter) reconcileConfigMap(ctx context.Context, instance 
 	if err != nil {
 		if errors.IsNotFound(err) {
 			configMapFromInstance := buildConfigMap(instance)
-			_ = controllerutil.SetControllerReference(instance, configMapFromInstance, r.scheme)
+			_ = controllerutil.SetControllerReference(instance, configMapFromInstance, r.Scheme)
 
 			reqLogger.Info("Creating a new ConfigMap")
 			err = r.Client.Create(ctx, configMapFromInstance)

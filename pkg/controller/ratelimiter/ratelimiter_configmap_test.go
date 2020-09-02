@@ -19,7 +19,7 @@ func Test_ReconcileConfigMap_CreateSuccess(t *testing.T) {
 
 		foundConfigMap := &corev1.ConfigMap{}
 		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundConfigMap)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundConfigMap)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)

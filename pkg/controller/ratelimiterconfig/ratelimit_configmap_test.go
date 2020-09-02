@@ -18,13 +18,13 @@ func Test_UpdateConfigMap_Success(t *testing.T) {
 		rateLimiter := buildRateLimiter()
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), r.configMap)
+		errCreate := r.Client.Create(context.Background(), r.configMap)
 		a.Nil(errCreate)
 
 		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 		reconcileResult, err := r.updateConfigMap(context.Background(), rateLimiterConfig)
 		namespacedName := types.NamespacedName{Name: r.configMap.Name, Namespace: r.configMap.Namespace}
-		errGet := r.client.Get(context.Background(), namespacedName, r.configMap)
+		errGet := r.Client.Get(context.Background(), namespacedName, r.configMap)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
@@ -44,7 +44,7 @@ func Test_UpdateConfigMap_DomainExists(t *testing.T) {
 		rateLimiter := buildRateLimiter()
 		r := buildReconciler(rateLimiter)
 
-		errCreate := r.client.Create(context.Background(), r.configMap)
+		errCreate := r.Client.Create(context.Background(), r.configMap)
 		a.Nil(errCreate)
 
 		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
@@ -53,7 +53,7 @@ func Test_UpdateConfigMap_DomainExists(t *testing.T) {
 
 		reconcileResult, err := r.updateConfigMap(context.Background(), rateLimiterConfig)
 		namespacedName := types.NamespacedName{Name: r.configMap.Name, Namespace: r.configMap.Namespace}
-		errGet := r.client.Get(context.Background(), namespacedName, r.configMap)
+		errGet := r.Client.Get(context.Background(), namespacedName, r.configMap)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
@@ -89,12 +89,12 @@ func Test_DeleteFromConfigMap_Success(t *testing.T) {
 		fileName := buildConfigMapDataFileName(rateLimiterConfig.Name)
 		r.configMap.Data[fileName] = buildRateLimitPropertyValue(rateLimiterConfig.Spec.RateLimitProperty)
 
-		errCreate := r.client.Create(context.Background(), r.configMap)
+		errCreate := r.Client.Create(context.Background(), r.configMap)
 		a.Nil(errCreate)
 
 		err := r.deleteFromConfigMap(context.Background(), rateLimiterConfig)
 		namespacedName := types.NamespacedName{Name: r.configMap.Name, Namespace: r.configMap.Namespace}
-		errGet := r.client.Get(context.Background(), namespacedName, r.configMap)
+		errGet := r.Client.Get(context.Background(), namespacedName, r.configMap)
 
 		a.Nil(err)
 		a.Nil(errGet)

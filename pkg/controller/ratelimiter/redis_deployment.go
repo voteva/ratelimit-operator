@@ -20,7 +20,7 @@ func (r *ReconcileRateLimiter) reconcileDeploymentForRedis(ctx context.Context, 
 	foundDeployment := &appsv1.Deployment{}
 
 	deploymentFromInstance := buildDeploymentForRedis(instance)
-	_ = controllerutil.SetControllerReference(instance, deploymentFromInstance, r.scheme)
+	_ = controllerutil.SetControllerReference(instance, deploymentFromInstance, r.Scheme)
 
 	err := r.Client.Get(ctx, types.NamespacedName{Name: deploymentFromInstance.Name, Namespace: instance.Namespace}, foundDeployment)
 	if err != nil {

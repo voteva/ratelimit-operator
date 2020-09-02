@@ -20,7 +20,7 @@ func Test_ReconcileDeploymentForService_CreateSuccess(t *testing.T) {
 
 		foundDeployment := &appsv1.Deployment{}
 		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundDeployment)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
@@ -56,14 +56,14 @@ func Test_ReconcileDeploymentForService_Update(t *testing.T) {
 
 		dep := buildDeploymentForService(rateLimiter)
 		dep.Spec.Selector = nil
-		errCreateSrvRL := r.client.Create(context.Background(), dep)
+		errCreateSrvRL := r.Client.Create(context.Background(), dep)
 		a.Nil(errCreateSrvRL)
 
 		reconcileResult, err := r.reconcileDeploymentForService(context.Background(), rateLimiter)
 
 		foundDeployment := &appsv1.Deployment{}
 		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundDeployment)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundDeployment)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)

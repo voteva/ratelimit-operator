@@ -23,7 +23,7 @@ func Test_ReconcileServiceForService_CreateSuccess(t *testing.T) {
 
 		foundService := &corev1.Service{}
 		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundService)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
@@ -59,14 +59,14 @@ func Test_ReconcileServiceForService_Update(t *testing.T) {
 
 		srv := buildService(rateLimiter)
 		srv.Spec.Ports[0].Name = utils.BuildRandomString(3)
-		errCreateSrvRL := r.client.Create(context.Background(), srv)
+		errCreateSrvRL := r.Client.Create(context.Background(), srv)
 		a.Nil(errCreateSrvRL)
 
 		reconcileResult, err := r.reconcileServiceForService(context.Background(), rateLimiter)
 
 		foundService := &corev1.Service{}
 		namespaceName := buildServiceResourceNamespacedName(rateLimiter)
-		errGet := r.client.Get(context.Background(), namespaceName, foundService)
+		errGet := r.Client.Get(context.Background(), namespaceName, foundService)
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)

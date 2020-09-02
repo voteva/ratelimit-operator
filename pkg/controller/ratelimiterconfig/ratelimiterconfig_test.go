@@ -107,6 +107,7 @@ func doReconcile(reconciler *ratelimiterconfig.ReconcileRateLimiterConfig, reque
 }
 
 func getPreparedRateLimiterConfigResource(Name string, Namespace string, RateLimiter string) *v1.RateLimiterConfig {
+	host := "localhost"
 	return &v1.RateLimiterConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Name,
@@ -114,6 +115,7 @@ func getPreparedRateLimiterConfigResource(Name string, Namespace string, RateLim
 		},
 		Spec: v1.RateLimiterConfigSpec{
 			ApplyTo:     "GATEWAY",
+			Host:        &host,
 			RateLimiter: RateLimiter,
 		},
 	}
