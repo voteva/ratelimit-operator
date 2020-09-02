@@ -25,7 +25,10 @@ func Test_HasFinalizer_False(t *testing.T) {
 
 	t.Run("HasFinalizer (False)", func(t *testing.T) {
 		rateLimiter := buildRateLimiter()
-		result := HasFinalizer(rateLimiter, BuildRandomString(3))
+		finalizer := BuildRandomString(3)
+		AddFinalizer(rateLimiter, finalizer)
+		RemoveFinalizer(rateLimiter, finalizer)
+		result := HasFinalizer(rateLimiter, finalizer)
 
 		a.False(result)
 	})
