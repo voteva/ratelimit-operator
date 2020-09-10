@@ -92,7 +92,7 @@ func Test_BuildDeployment(t *testing.T) {
 		a.Equal(utils.Merge(utils.AnnotationSidecarIstio(), utils.AnnotationMetricsIstio(9102)), actualResult.Spec.Template.ObjectMeta.Annotations)
 		a.Equal(2, len(actualResult.Spec.Template.Spec.Containers))
 		a.Equal(2, len(actualResult.Spec.Template.Spec.Volumes))
-		a.Equal("config", actualResult.Spec.Template.Spec.Volumes[0].Name)
+		a.Equal("config-ratelimiter", actualResult.Spec.Template.Spec.Volumes[0].Name)
 		a.Equal(rateLimiter.Name, actualResult.Spec.Template.Spec.Volumes[0].VolumeSource.ConfigMap.LocalObjectReference.Name)
 	})
 }

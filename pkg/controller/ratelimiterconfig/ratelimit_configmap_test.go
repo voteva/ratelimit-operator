@@ -2,10 +2,9 @@ package ratelimiterconfig
 
 import (
 	"context"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/controller/common"
 	"ratelimit-operator/pkg/utils"
 	"testing"
 )
@@ -30,7 +29,7 @@ func Test_UpdateConfigMap_Success(t *testing.T) {
 		a.NotNil(reconcileResult)
 		a.Nil(errGet)
 
-		fileName := buildConfigMapDataFileName(rateLimiterConfig.Name)
+		fileName := common.BuildConfigMapDataFileName(rateLimiterConfig.Name)
 		_, found := r.configMap.Data[fileName]
 		a.True(found)
 	})
@@ -49,7 +48,7 @@ func Test_UpdateConfigMap_DomainExists(t *testing.T) {
 
 		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
 		fileName := utils.BuildRandomString(3)
-		r.configMap.Data[fileName] = buildRateLimitPropertyValue(rateLimiterConfig.Spec.RateLimitProperty)
+		r.configMap.Data[fileName] = common.BuildRateLimitPropertyValue(rateLimiterConfig)
 
 		reconcileResult, err := r.updateConfigMap(context.Background(), rateLimiterConfig)
 		namespacedName := types.NamespacedName{Name: r.configMap.Name, Namespace: r.configMap.Namespace}
@@ -86,8 +85,8 @@ func Test_DeleteFromConfigMap_Success(t *testing.T) {
 		r := buildReconciler(rateLimiter)
 
 		rateLimiterConfig := buildRateLimiterConfig(rateLimiter)
-		fileName := buildConfigMapDataFileName(rateLimiterConfig.Name)
-		r.configMap.Data[fileName] = buildRateLimitPropertyValue(rateLimiterConfig.Spec.RateLimitProperty)
+		fileName := common.BuildConfigMapDataFileName(rateLimiterConfig.Name)
+		r.configMap.Data[fileName] = common.BuildRateLimitPropertyValue(rateLimiterConfig)
 
 		errCreate := r.Client.Create(context.Background(), r.configMap)
 		a.Nil(errCreate)
@@ -132,42 +131,5 @@ func Test_DeleteFromConfigMap_ErrorNotFound(t *testing.T) {
 		err := r.deleteFromConfigMap(context.Background(), rateLimiterConfig)
 
 		a.NotNil(err)
-	})
-}
-
-func Test_BuildRateLimitPropertyValue_Success(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("success build RateLimitProperty value", func(t *testing.T) {
-		prop := v1.RateLimitProperty{
-			Domain: utils.BuildRandomString(3),
-		}
-		a.NotNil(buildRateLimitPropertyValue(prop))
-	})
-}
-
-func Test_UnmarshalRateLimitPropertyValue_Success(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("unmarshal RateLimitProperty value (Success)", func(t *testing.T) {
-		domain := utils.BuildRandomString(3)
-		data := fmt.Sprintf("domain: %s", domain)
-
-		result := unmarshalRateLimitPropertyValue(data)
-
-		a.NotNil(result)
-		a.Equal(domain, result.Domain)
-	})
-}
-
-func Test_BuildConfigMapDataFileName_Success(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("success build ConfigMap.Data file name", func(t *testing.T) {
-		fileName := utils.BuildRandomString(3)
-		a.Equal(fileName+".yaml", buildConfigMapDataFileName(fileName))
 	})
 }

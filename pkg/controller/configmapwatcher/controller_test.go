@@ -12,6 +12,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"ratelimit-operator/pkg/apis"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/controller/common"
 	"ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -126,7 +127,7 @@ func Test_UpdateConfigMap_NotEmptyList(t *testing.T) {
 		configMap := &corev1.ConfigMap{}
 		list := &v1.RateLimiterConfigList{}
 		list.Items = []v1.RateLimiterConfig{*rateLimiterConfig}
-		fileName := buildConfigMapDataFileName(rateLimiterConfig.Name)
+		fileName := common.BuildConfigMapDataFileName(rateLimiterConfig.Name)
 		r := buildReconciler(rateLimiter)
 
 		r.updateConfigMap(context.TODO(), configMap, list)
@@ -137,31 +138,8 @@ func Test_UpdateConfigMap_NotEmptyList(t *testing.T) {
 	})
 }
 
-func Test_BuildRateLimitPropertyValue_Success(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("success build RateLimitProperty value", func(t *testing.T) {
-		prop := v1.RateLimitProperty{
-			Domain: utils.BuildRandomString(3),
-		}
-		a.NotNil(buildRateLimitPropertyValue(prop))
-	})
-}
-
-func Test_BuildConfigMapDataFileName(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("build ConfigMap data file name", func(t *testing.T) {
-		fileName := utils.BuildRandomString(3)
-		a.Equal(fileName+".yaml", buildConfigMapDataFileName(fileName))
-	})
-}
-
 func buildRateLimiter() *v1.RateLimiter {
 	logLevel := v1.INFO
-	port := int32(utils.BuildRandomInt(2))
 	size := int32(1)
 
 	return &v1.RateLimiter{
@@ -171,7 +149,6 @@ func buildRateLimiter() *v1.RateLimiter {
 		},
 		Spec: v1.RateLimiterSpec{
 			LogLevel: &logLevel,
-			Port:     &port,
 			Size:     &size,
 		},
 		Status: v1.RateLimiterStatus{},
@@ -192,12 +169,9 @@ func buildRateLimiterConfig(rl *v1.RateLimiter) *v1.RateLimiterConfig {
 			Host:        &host,
 			Port:        int32(utils.BuildRandomInt(2)),
 			RateLimiter: rl.Name,
-			RateLimitProperty: v1.RateLimitProperty{
-				Domain: utils.BuildRandomString(3),
-				Descriptors: []v1.Descriptor{{
-					Key: utils.BuildRandomString(3),
-				}},
-			},
+			Descriptors: []v1.Descriptor{{
+				Key: utils.BuildRandomString(3),
+			}},
 			RateLimitRequestTimeout: &rateLimitRequestTimeout,
 			FailureModeDeny:         &failureModeDeny,
 		},

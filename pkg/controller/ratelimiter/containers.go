@@ -12,7 +12,7 @@ func buildRedisContainer(name string) corev1.Container {
 		Name:  name,
 		Image: constants.REDIS_IMAGE,
 		Ports: []corev1.ContainerPort{{
-			ContainerPort: constants.REDIS_PORT,
+			ContainerPort: constants.DEFAULT_REDIS_PORT,
 			Protocol:      corev1.ProtocolTCP,
 		}},
 		Command: []string{"redis-server"},
@@ -44,7 +44,7 @@ func buildStatsdExporterContainer(name string) corev1.Container {
 	}
 }
 
-func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
+func buildRateLimiterContainer(instance *v1.RateLimiter) corev1.Container {
 	redisUrl := buildRedisUrl(instance.Name)
 	configMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 
@@ -57,7 +57,7 @@ func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
 		},
 		Image: constants.RATE_LIMITER_SERVICE_IMAGE,
 		Ports: []corev1.ContainerPort{{
-			ContainerPort: *instance.Spec.Port,
+			ContainerPort: constants.DEFAULT_RATELIMITER_PORT,
 			Protocol:      corev1.ProtocolTCP,
 		}},
 		Env: []corev1.EnvVar{
@@ -101,7 +101,7 @@ func buildServiceContainer(instance *v1.RateLimiter) corev1.Container {
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{{
-			Name:      "config",
+			Name:      "config-ratelimiter",
 			MountPath: configMountPath,
 		}},
 		TerminationMessagePolicy: corev1.TerminationMessageReadFile,

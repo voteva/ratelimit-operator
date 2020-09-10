@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/constants"
 	"ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -48,7 +49,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForService(ctx context.Context, i
 }
 
 func buildService(instance *v1.RateLimiter) *corev1.Service {
-	port := *instance.Spec.Port
+	port := constants.DEFAULT_RATELIMITER_PORT
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      instance.Name,

@@ -21,9 +21,6 @@ const (
 type RateLimiterSpec struct {
 	// +kubebuilder:validation:Enum={DEBUG,INFO,WARN,ERROR}
 	LogLevel *LogLevel `json:"logLevel,omitempty"`
-	// +kubebuilder:validation:Maximum=65535
-	// +kubebuilder:validation:Minimum=0
-	Port *int32 `json:"port,omitempty"`
 	// +kubebuilder:validation:Maximum=10
 	// +kubebuilder:validation:Minimum=0
 	Size *int32 `json:"size,omitempty"`

@@ -104,7 +104,7 @@ func buildHttpFilterPatchValue(instance *v1.RateLimiterConfig, rateLimiter *v1.R
 	values := envoyfilter_types.HttpFilterPatchValues{
 		Name: "envoy.rate_limit",
 		Config: envoyfilter_types.Config{
-			Domain:          instance.Spec.RateLimitProperty.Domain,
+			Domain:          instance.Name,
 			FailureModeDeny: *instance.Spec.FailureModeDeny,
 			RateLimitService: envoyfilter_types.RateLimitService{
 				GrpcService: envoyfilter_types.GrpcService{
@@ -177,40 +177,9 @@ func buildVirtualHostPatch(instance *v1.RateLimiterConfig) *networking.EnvoyFilt
 }
 
 func buildVirtualHostPatchValue(instance *v1.RateLimiterConfig) string {
-	var rateLimits []envoyfilter_types.RateLimit
-
-	for _, d := range instance.Spec.RateLimitProperty.Descriptors {
-		var action envoyfilter_types.Action
-
-		if d.Key == "header_match" {
-			action = envoyfilter_types.Action{
-				HeaderValueMatch: &envoyfilter_types.HeaderValueMatch{
-					DescriptorValue: d.Value,
-					ExpectMatch:     true,
-					Headers: []envoyfilter_types.Header{{
-						ExactMatch: d.Value,
-						Name:       ":path",
-					}},
-				},
-				RequestHeaders: nil,
-			}
-		} else {
-			action = envoyfilter_types.Action{
-				HeaderValueMatch: nil,
-				RequestHeaders: &envoyfilter_types.RequestHeader{
-					DescriptorKey: d.Key,
-					HeaderName:    d.Key,
-				},
-			}
-		}
-
-		rateLimits = append(rateLimits,
-			envoyfilter_types.RateLimit{
-				Actions: []envoyfilter_types.Action{action},
-			})
+	values := envoyfilter_types.VirtualHostPatchValues{
+		RateLimits: instance.Spec.RateLimits,
 	}
-
-	values := envoyfilter_types.VirtualHostPatchValues{RateLimits: rateLimits}
 
 	res, err := yaml.Marshal(&values)
 	if err != nil {

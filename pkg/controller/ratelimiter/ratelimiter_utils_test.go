@@ -24,6 +24,6 @@ func Test_BuildRedisUrl(t *testing.T) {
 
 	t.Run("success build Redis url", func(t *testing.T) {
 		name := utils.BuildRandomString(3)
-		a.Equal(buildNameForRedis(name)+":"+strconv.Itoa(int(constants.REDIS_PORT)), buildRedisUrl(name))
+		a.Equal(buildNameForRedis(name)+":"+strconv.Itoa(int(constants.DEFAULT_REDIS_PORT)), buildRedisUrl(name))
 	})
 }

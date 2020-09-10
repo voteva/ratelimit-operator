@@ -5,7 +5,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"ratelimit-operator/pkg/controller/common"
 
-	"github.com/ghodss/yaml"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -121,8 +120,8 @@ func (r *ReconcileConfigMapWatcher) updateConfigMap(ctx context.Context, configM
 
 	needUpdate := false
 	for _, rlc := range list.Items {
-		fileName := buildConfigMapDataFileName(rlc.Name)
-		expectedVal := buildRateLimitPropertyValue(rlc.Spec.RateLimitProperty)
+		fileName := common.BuildConfigMapDataFileName(rlc.Name)
+		expectedVal := common.BuildRateLimitPropertyValue(&rlc)
 		actualVal, found := data[fileName]
 
 		if !found || actualVal != expectedVal {
@@ -135,16 +134,4 @@ func (r *ReconcileConfigMapWatcher) updateConfigMap(ctx context.Context, configM
 		configMap.Data = data
 		r.client.Update(ctx, configMap)
 	}
-}
-
-func buildRateLimitPropertyValue(prop v1.RateLimitProperty) string {
-	res, err := yaml.Marshal(&prop)
-	if err != nil {
-		log.Error(err, "Failed to convert object to yaml")
-	}
-	return string(res)
-}
-
-func buildConfigMapDataFileName(name string) string {
-	return name + ".yaml"
 }

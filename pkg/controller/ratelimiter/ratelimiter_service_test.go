@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/constants"
 	"ratelimit-operator/pkg/utils"
 	"testing"
 )
@@ -86,14 +87,15 @@ func Test_BuildService(t *testing.T) {
 
 		actualResult := buildService(rateLimiter)
 
+		expectedPort := constants.DEFAULT_RATELIMITER_PORT
 		a.Equal(rateLimiter.Name, actualResult.Name)
 		a.Equal(rateLimiter.Namespace, actualResult.Namespace)
 		a.Equal(utils.SelectorsForApp(rateLimiter.Name), actualResult.Spec.Selector)
 		a.Equal(1, len(actualResult.Spec.Ports))
 		a.Equal("grpc-"+rateLimiter.Name, actualResult.Spec.Ports[0].Name)
 		a.Equal(corev1.ProtocolTCP, actualResult.Spec.Ports[0].Protocol)
-		a.Equal(*rateLimiter.Spec.Port, actualResult.Spec.Ports[0].Port)
-		a.Equal(intstr.IntOrString{Type: intstr.Int, IntVal: *rateLimiter.Spec.Port}, actualResult.Spec.Ports[0].TargetPort)
+		a.Equal(expectedPort, actualResult.Spec.Ports[0].Port)
+		a.Equal(intstr.IntOrString{Type: intstr.Int, IntVal: expectedPort}, actualResult.Spec.Ports[0].TargetPort)
 	})
 }
 

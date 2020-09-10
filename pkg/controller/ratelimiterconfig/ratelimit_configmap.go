@@ -2,8 +2,8 @@ package ratelimiterconfig
 
 import (
 	"context"
-	"github.com/ghodss/yaml"
 	"ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/controller/common"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -13,18 +13,8 @@ func (r *ReconcileRateLimiterConfig) updateConfigMap(ctx context.Context, instan
 		data = make(map[string]string)
 	}
 
-	fileName := buildConfigMapDataFileName(instance.Name)
-
-	for key, value := range data {
-		props := unmarshalRateLimitPropertyValue(value)
-
-		if props.Domain == instance.Spec.RateLimitProperty.Domain && key != fileName {
-			log.Error(nil, "Failed to add new rate limit configuration. Config already exists with domain "+props.Domain)
-			return reconcile.Result{}, nil
-		}
-	}
-
-	data[fileName] = buildRateLimitPropertyValue(instance.Spec.RateLimitProperty)
+	fileName := common.BuildConfigMapDataFileName(instance.Name)
+	data[fileName] = common.BuildRateLimitPropertyValue(instance)
 
 	r.configMap.Data = data
 
@@ -42,7 +32,7 @@ func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, in
 		return nil
 	}
 
-	fileName := buildConfigMapDataFileName(instance.Name)
+	fileName := common.BuildConfigMapDataFileName(instance.Name)
 	delete(data, fileName)
 
 	r.configMap.Data = data
@@ -53,25 +43,4 @@ func (r *ReconcileRateLimiterConfig) deleteFromConfigMap(ctx context.Context, in
 		return err
 	}
 	return nil
-}
-
-func buildRateLimitPropertyValue(prop v1.RateLimitProperty) string {
-	res, err := yaml.Marshal(&prop)
-	if err != nil {
-		log.Error(err, "Failed to convert object to yaml")
-	}
-	return string(res)
-}
-
-func unmarshalRateLimitPropertyValue(data string) v1.RateLimitProperty {
-	props := v1.RateLimitProperty{}
-	err := yaml.Unmarshal([]byte(data), &props)
-	if err != nil {
-		log.Error(err, "Failed to convert yaml to RateLimitProperty")
-	}
-	return props
-}
-
-func buildConfigMapDataFileName(name string) string {
-	return name + ".yaml"
 }

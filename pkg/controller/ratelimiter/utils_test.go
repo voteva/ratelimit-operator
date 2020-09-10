@@ -14,7 +14,6 @@ import (
 
 func buildRateLimiter() *v1.RateLimiter {
 	logLevel := v1.INFO
-	port := int32(utils.BuildRandomInt(2))
 	size := int32(1)
 
 	return &v1.RateLimiter{
@@ -24,7 +23,6 @@ func buildRateLimiter() *v1.RateLimiter {
 		},
 		Spec: v1.RateLimiterSpec{
 			LogLevel: &logLevel,
-			Port:     &port,
 			Size:     &size,
 		},
 		Status: v1.RateLimiterStatus{},

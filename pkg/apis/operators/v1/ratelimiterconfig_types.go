@@ -12,39 +12,9 @@ const (
 	SIDECAR_OUTBOUND ApplyTo = "SIDECAR_OUTBOUND"
 )
 
-type RateLimit struct {
-	// +kubebuilder:validation:Enum={second,minute,hour,day}
-	Unit string `json:"unit" yaml:"unit"`
-	// +kubebuilder:validation:Minimum=0
-	RequestsPerUnit int32 `json:"requests_per_unit" yaml:"requests_per_unit"`
-}
-
-type DescriptorInternal struct {
-	// +kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:MinLength=1
-	Key string `json:"key" yaml:"key"`
-	// +kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:MinLength=1
-	Value     string    `json:"value,omitempty" yaml:"value,omitempty"`
-	RateLimit RateLimit `json:"rate_limit,omitempty" yaml:"rate_limit,omitempty"`
-}
-
-type Descriptor struct {
-	// +kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:MinLength=1
-	Key string `json:"key" yaml:"key"`
-	// +kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:MinLength=1
-	Value       string               `json:"value,omitempty" yaml:"value,omitempty"`
-	RateLimit   RateLimit            `json:"rate_limit,omitempty" yaml:"rate_limit,omitempty"`
-	Descriptors []DescriptorInternal `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
-}
-
-type RateLimitProperty struct {
-	// +kubebuilder:validation:MaxLength=255
-	// +kubebuilder:validation:MinLength=4
-	Domain      string       `json:"domain" yaml:"domain"`
-	Descriptors []Descriptor `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
+type RateLimits struct {
+	DisableKey string   `json:"disable_key,omitempty" yaml:"disable_key,omitempty"`
+	Actions    []Action `json:"actions" yaml:"actions"`
 }
 
 type WorkloadSelector struct {
@@ -64,10 +34,11 @@ type RateLimiterConfigSpec struct {
 	// +kubebuilder:validation:MinLength=1
 	RateLimiter string `json:"rateLimiter"`
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h))+$"
-	RateLimitRequestTimeout *string           `json:"rateLimitRequestTimeout,omitempty"`
-	RateLimitProperty       RateLimitProperty `json:"rateLimitProperty,omitempty"`
-	FailureModeDeny         *bool             `json:"failureModeDeny,omitempty"`
-	WorkloadSelector        WorkloadSelector  `json:"workloadSelector"`
+	RateLimitRequestTimeout *string          `json:"rateLimitRequestTimeout,omitempty"`
+	FailureModeDeny         *bool            `json:"failureModeDeny,omitempty"`
+	WorkloadSelector        WorkloadSelector `json:"workloadSelector"`
+	Descriptors             []Descriptor     `json:"descriptors,omitempty" yaml:"descriptors,omitempty"`
+	RateLimits              []RateLimits     `json:"rateLimits,omitempty" yaml:"rateLimits,omitempty"`
 }
 
 type RateLimiterConfigStatus struct {

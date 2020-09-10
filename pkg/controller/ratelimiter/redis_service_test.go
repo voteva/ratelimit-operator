@@ -77,8 +77,8 @@ func Test_BuildServiceForRedis(t *testing.T) {
 		a.Equal(1, len(actualResult.Spec.Ports))
 		a.Equal(expectedServiceName, actualResult.Spec.Ports[0].Name)
 		a.Equal(corev1.ProtocolTCP, actualResult.Spec.Ports[0].Protocol)
-		a.Equal(constants.REDIS_PORT, actualResult.Spec.Ports[0].Port)
-		a.Equal(intstr.IntOrString{Type: intstr.Int, IntVal: constants.REDIS_PORT}, actualResult.Spec.Ports[0].TargetPort)
+		a.Equal(constants.DEFAULT_REDIS_PORT, actualResult.Spec.Ports[0].Port)
+		a.Equal(intstr.IntOrString{Type: intstr.Int, IntVal: constants.DEFAULT_REDIS_PORT}, actualResult.Spec.Ports[0].TargetPort)
 		a.Equal(utils.SelectorsForApp(expectedServiceName), actualResult.Spec.Selector)
 	})
 }

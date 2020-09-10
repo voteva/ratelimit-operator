@@ -11,14 +11,20 @@ spec:
   workloadSelector:
     labels:
       istio: ingressgateway
-  rateLimitProperty:
-    domain: host-info
-    descriptors:
-      - key: custom-rl-header
-        value: setting1
-        rate_limit:
-          unit: minute
-          requests_per_unit: 1
+  descriptors:
+    - key: custom-rl-header
+      value: setting1
+      rate_limit:
+        unit: minute
+        requests_per_unit: 1
+  rateLimits:
+    - actions:
+        - generic_key:
+            descriptor_value: counters
+    - actions:
+        - request_headers:
+            descriptor_key: custom-rl-header
+            header_name: custom-rl-header
 
 
 

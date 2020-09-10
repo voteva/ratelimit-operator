@@ -38,11 +38,6 @@ spec:
                 - WARN
                 - ERROR
                 type: string
-              port:
-                format: int32
-                maximum: 65535
-                minimum: 0
-                type: integer
               size:
                 format: int32
                 maximum: 10

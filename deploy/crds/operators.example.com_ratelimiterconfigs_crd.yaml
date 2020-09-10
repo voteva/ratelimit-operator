@@ -36,6 +36,79 @@ spec:
                 - SIDECAR_INBOUND
                 - SIDECAR_OUTBOUND
                 type: string
+              descriptors:
+                items:
+                  description: A descriptor is a list of key/value pairs that the
+                    rate limit server uses to select the correct rate limit to use
+                    when limiting. Descriptors are case-sensitive. Each descriptor
+                    in a descriptor list must have a key. It can also optionally have
+                    a value to enable a more specific match. The `rate_limit` block
+                    is optional and, if present, sets up an actual rate limit rule.
+                    If the rate limit is not present and there are no nested descriptors,
+                    then the descriptor is effectively whitelisted. Otherwise, nested
+                    descriptors allow more complex matching and rate limiting scenarios.
+                  properties:
+                    always_apply:
+                      description: "A boolean override for rule priority via weighted
+                        rules. Any rule with `alwaysApply` set to `true` will always
+                        be considered for rate limiting, regardless of the rule's
+                        weight. The rule with the highest weight will still be considered.
+                        (this can be a rule that also has `alwaysApply` set to `true`)
+                        \n Defaults to false."
+                      type: boolean
+                    descriptors:
+                      description: Nested descriptors.
+                      items:
+                        type: object
+                      type: array
+                    key:
+                      maxLength: 255
+                      minLength: 1
+                      type: string
+                    rate_limit:
+                      description: A `RateLimit` specifies the actual rate limit that
+                        will be used when there is a match.
+                      properties:
+                        requests_per_unit:
+                          format: int32
+                          minimum: 0
+                          type: integer
+                        unit:
+                          enum:
+                          - second
+                          - minute
+                          - hour
+                          - day
+                          type: string
+                      required:
+                      - requests_per_unit
+                      - unit
+                      type: object
+                    value:
+                      maxLength: 255
+                      minLength: 1
+                      type: string
+                    weight:
+                      description: "Each top-level Descriptor defines a new Rate Limit
+                        \"rule\". When a request comes in, rate limit actions are
+                        applied to the request to generate descriptor tuples that
+                        are sent to the rate limit server. If any rule is triggered
+                        then the entire request returns HTTP 429 Too Many Requests.
+                        \n Typically, rule priority is signalled by nesting descriptors,
+                        as the most specific rule match for the descriptor tuple generated
+                        by the rate limit actions is used. In rare cases this is too
+                        restrictive; instead you can set rule priority by setting
+                        weights on your descriptors. \n All rules with the highest
+                        weight are processed, if any of these rules trigger rate limiting
+                        then the entire request will return a 429. Rules that are
+                        not considered for rate limiting are ignored in the rate limit
+                        server, and their request count is not incremented in the
+                        rate limit server cache. \n Defaults to 0; thus all rules
+                        are evaluated by default."
+                      format: int32
+                      type: integer
+                  type: object
+                type: array
               failureModeDeny:
                 type: boolean
               host:
@@ -47,79 +120,6 @@ spec:
                 maximum: 65535
                 minimum: 0
                 type: integer
-              rateLimitProperty:
-                properties:
-                  descriptors:
-                    items:
-                      properties:
-                        descriptors:
-                          items:
-                            properties:
-                              key:
-                                maxLength: 255
-                                minLength: 1
-                                type: string
-                              rate_limit:
-                                properties:
-                                  requests_per_unit:
-                                    format: int32
-                                    minimum: 0
-                                    type: integer
-                                  unit:
-                                    enum:
-                                    - second
-                                    - minute
-                                    - hour
-                                    - day
-                                    type: string
-                                required:
-                                - requests_per_unit
-                                - unit
-                                type: object
-                              value:
-                                maxLength: 255
-                                minLength: 1
-                                type: string
-                            required:
-                            - key
-                            type: object
-                          type: array
-                        key:
-                          maxLength: 255
-                          minLength: 1
-                          type: string
-                        rate_limit:
-                          properties:
-                            requests_per_unit:
-                              format: int32
-                              minimum: 0
-                              type: integer
-                            unit:
-                              enum:
-                              - second
-                              - minute
-                              - hour
-                              - day
-                              type: string
-                          required:
-                          - requests_per_unit
-                          - unit
-                          type: object
-                        value:
-                          maxLength: 255
-                          minLength: 1
-                          type: string
-                      required:
-                      - key
-                      type: object
-                    type: array
-                  domain:
-                    maxLength: 255
-                    minLength: 4
-                    type: string
-                required:
-                - domain
-                type: object
               rateLimitRequestTimeout:
                 pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                 type: string
@@ -127,6 +127,135 @@ spec:
                 maxLength: 255
                 minLength: 1
                 type: string
+              rateLimits:
+                items:
+                  properties:
+                    actions:
+                      items:
+                        description: Copied directly from envoy https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/route/v3/route_components.proto#envoy-v3-api-msg-config-route-v3-ratelimit-action
+                        properties:
+                          destination_cluster:
+                            description: "The following descriptor entry is appended
+                              to the descriptor: \n ```   (\"destination_cluster\",
+                              \"<routed target cluster>\") ``` \n Once a request matches
+                              against a route table rule, a routed cluster is determined
+                              by one of the following `route table configuration (envoy_api_msg_RouteConfiguration)`
+                              settings: \n * `cluster (envoy_api_field_route.RouteAction.cluster)`
+                              indicates the upstream cluster   to route to. * `weighted_clusters
+                              (envoy_api_field_route.RouteAction.weighted_clusters)`
+                              \  chooses a cluster randomly from a set of clusters
+                              with attributed weight. * `cluster_header (envoy_api_field_route.RouteAction.cluster_header)`
+                              indicates which   header in the request contains the
+                              target cluster."
+                            type: object
+                          generic_key:
+                            description: 'The following descriptor entry is appended
+                              to the descriptor:   ("generic_key", "<descriptor_value>")'
+                            properties:
+                              descriptor_value:
+                                description: The value to use in the descriptor entry.
+                                type: string
+                            type: object
+                          header_value_match:
+                            description: 'The following descriptor entry is appended
+                              to the descriptor:   ("header_match", "<descriptor_value>")'
+                            properties:
+                              descriptor_value:
+                                description: The value to use in the descriptor entry.
+                                type: string
+                              expect_match:
+                                description: If set to true, the action will append
+                                  a descriptor entry when the request matches the
+                                  headers. If set to false, the action will append
+                                  a descriptor entry when the request does not match
+                                  the headers. The default value is true.
+                                type: boolean
+                              headers:
+                                description: Specifies a set of headers that the rate
+                                  limit action should match on. The action will check
+                                  the request’s headers against all the specified
+                                  headers in the config. A match will happen if all
+                                  the headers in the config are present in the request
+                                  with the same values (or based on presence if the
+                                  value field is not in the config).
+                                items:
+                                  properties:
+                                    exact_match:
+                                      description: Specifies how the header match
+                                        will be performed to route the request.
+                                      type: string
+                                    invert_match:
+                                      description: "If specified, the match result
+                                        will be inverted before checking. Defaults
+                                        to false. \n Examples: \n * The regex *\\d{3}*
+                                        does not match the value *1234*, so it will
+                                        match when inverted. * The range [-10,0) will
+                                        match the value -1, so it will not match when
+                                        inverted."
+                                      type: boolean
+                                    name:
+                                      description: Specifies the name of the header
+                                        in the request.
+                                      type: string
+                                    prefix_match:
+                                      type: string
+                                    present_match:
+                                      type: boolean
+                                    range_match:
+                                      description: Specifies the int64 start and end
+                                        of the range using half-open interval semantics
+                                        [start, end).
+                                      properties:
+                                        end:
+                                          description: end of the range (exclusive)
+                                          format: int64
+                                          type: integer
+                                        start:
+                                          description: start of the range (inclusive)
+                                          format: int64
+                                          type: integer
+                                      type: object
+                                    regex_match:
+                                      type: string
+                                    suffix_match:
+                                      type: string
+                                  type: object
+                                type: array
+                            type: object
+                          remote_address:
+                            description: 'The following descriptor entry is appended
+                              to the descriptor and is populated using the trusted
+                              address from `x-forwarded-for (config_http_conn_man_headers_x-forwarded-for)`:   ("remote_address",
+                              "<trusted address from x-forwarded-for>")'
+                            type: object
+                          request_headers:
+                            description: 'The following descriptor entry is appended
+                              when a header contains a key that matches the *header_name*:   ("<descriptor_key>",
+                              "<header_value_queried_from_header>")'
+                            properties:
+                              descriptor_key:
+                                description: The key to use in the descriptor entry.
+                                type: string
+                              header_name:
+                                description: The header name to be queried from the
+                                  request headers. The header’s value is used to populate
+                                  the value of the descriptor entry for the descriptor_key.
+                                type: string
+                            type: object
+                          source_cluster:
+                            description: "The following descriptor entry is appended
+                              to the descriptor: \n ```   (\"source_cluster\", \"<local
+                              service cluster>\") ``` \n <local service cluster> is
+                              derived from the :option:`--service-cluster` option."
+                            type: object
+                        type: object
+                      type: array
+                    disable_key:
+                      type: string
+                  required:
+                  - actions
+                  type: object
+                type: array
               workloadSelector:
                 properties:
                   labels:

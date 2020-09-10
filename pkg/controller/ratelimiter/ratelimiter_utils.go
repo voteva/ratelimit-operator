@@ -10,5 +10,5 @@ func buildNameForRedis(name string) string {
 }
 
 func buildRedisUrl(name string) string {
-	return buildNameForRedis(name) + ":" + strconv.Itoa(int(constants.REDIS_PORT))
+	return buildNameForRedis(name) + ":" + strconv.Itoa(int(constants.DEFAULT_REDIS_PORT))
 }

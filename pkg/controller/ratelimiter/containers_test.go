@@ -24,7 +24,7 @@ func Test_BuildRedisContainer(t *testing.T) {
 		a.Equal(containerName, actualResult.Name)
 		a.Equal(constants.REDIS_IMAGE, actualResult.Image)
 		a.Equal(1, len(actualResult.Ports))
-		a.Equal(constants.REDIS_PORT, actualResult.Ports[0].ContainerPort)
+		a.Equal(constants.DEFAULT_REDIS_PORT, actualResult.Ports[0].ContainerPort)
 		a.Equal(corev1.ProtocolTCP, actualResult.Ports[0].Protocol)
 		a.Equal(expectedCommand, actualResult.Command)
 		a.Equal(expectedArgs, actualResult.Args)
@@ -41,16 +41,16 @@ func Test_BuildServiceContainer(t *testing.T) {
 		expectedCommand := []string{"sh", "-c", "/bin/startup.sh"}
 		expectedConfigMountPath := fmt.Sprintf("%s/%s/%s", constants.RUNTIME_ROOT, constants.RUNTIME_SUBDIRECTORY, "config")
 
-		actualResult := buildServiceContainer(rateLimiter)
+		actualResult := buildRateLimiterContainer(rateLimiter)
 
 		a.Equal(rateLimiter.Name, actualResult.Name)
 		a.Equal(expectedCommand, actualResult.Command)
 		a.Equal(constants.RATE_LIMITER_SERVICE_IMAGE, actualResult.Image)
 		a.Equal(1, len(actualResult.Ports))
-		a.Equal(*rateLimiter.Spec.Port, actualResult.Ports[0].ContainerPort)
+		a.Equal(constants.DEFAULT_RATELIMITER_PORT, actualResult.Ports[0].ContainerPort)
 		a.Equal(corev1.ProtocolTCP, actualResult.Ports[0].Protocol)
 		a.Equal(1, len(actualResult.VolumeMounts))
-		a.Equal("config", actualResult.VolumeMounts[0].Name)
+		a.Equal("config-ratelimiter", actualResult.VolumeMounts[0].Name)
 		a.Equal(expectedConfigMountPath, actualResult.VolumeMounts[0].MountPath)
 	})
 }

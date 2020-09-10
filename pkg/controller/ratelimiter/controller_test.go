@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
 	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	"ratelimit-operator/pkg/constants"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"testing"
 )
@@ -33,7 +34,6 @@ func Test_Reconcile_NeedUpdateWithDefaults(t *testing.T) {
 	t.Run("reconcile (NeedUpdateWithDefaults)", func(t *testing.T) {
 		rateLimiter := buildRateLimiter()
 		rateLimiter.Spec.LogLevel = nil
-		rateLimiter.Spec.Port = nil
 		rateLimiter.Spec.Size = nil
 		request := buildReconcileRequest(rateLimiter)
 		r := buildEmptyReconciler()
@@ -49,7 +49,7 @@ func Test_Reconcile_NeedUpdateWithDefaults(t *testing.T) {
 		errGet := r.Client.Get(context.Background(), buildNamespacedName(rateLimiter), rateLimiter)
 		a.Nil(errGet)
 		a.Equal(v1.WARN, *rateLimiter.Spec.LogLevel)
-		a.Equal(int32(8081), *rateLimiter.Spec.Port)
+		a.Equal(int32(8081), constants.DEFAULT_RATELIMITER_PORT)
 		a.Equal(int32(1), *rateLimiter.Spec.Size)
 	})
 }

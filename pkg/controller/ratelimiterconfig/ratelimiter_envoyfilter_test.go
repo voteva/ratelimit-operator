@@ -153,7 +153,7 @@ func Test_BuildHttpFilterPatchValue_Success(t *testing.T) {
                   cluster_name: %s
                 timeout: 0.25s
           name: envoy.rate_limit`,
-			rateLimiterConfig.Spec.RateLimitProperty.Domain,
+			rateLimiterConfig.Name,
 			buildWorkAroundServiceName(rateLimiter))
 
 		expectedPatch := convertYaml2Struct(expectedPatchValue)
@@ -216,11 +216,9 @@ func Test_BuildVirtualHostPatch_Success(t *testing.T) {
 				ApplyTo: v1.GATEWAY,
 				Host:    &host,
 				Port:    int32(utils.BuildRandomInt(2)),
-				RateLimitProperty: v1.RateLimitProperty{
-					Descriptors: []v1.Descriptor{{
-						Key: utils.BuildRandomString(3),
-					}},
-				},
+				Descriptors: []v1.Descriptor{{
+					Key: utils.BuildRandomString(3),
+				}},
 			},
 		}
 
@@ -251,13 +249,20 @@ func Test_BuildVirtualHostPatchValue_HeaderSuccess(t *testing.T) {
 	a := assert.New(t)
 
 	t.Run("success build patch value for virtual host (header)", func(t *testing.T) {
+		header := utils.BuildRandomString(3)
 		rateLimiterConfig := &v1.RateLimiterConfig{
 			Spec: v1.RateLimiterConfigSpec{
-				RateLimitProperty: v1.RateLimitProperty{
-					Descriptors: []v1.Descriptor{{
-						Key: utils.BuildRandomString(3),
+				Descriptors: []v1.Descriptor{{
+					Key: header,
+				}},
+				RateLimits: []v1.RateLimits{{
+					Actions: []v1.Action{{
+						RequestHeaders: &v1.Action_RequestHeaders{
+							HeaderName:    header,
+							DescriptorKey: header,
+						},
 					}},
-				},
+				}},
 			},
 		}
 
@@ -267,45 +272,7 @@ func Test_BuildVirtualHostPatchValue_HeaderSuccess(t *testing.T) {
                 - request_headers:
                     descriptor_key: %s
                     header_name: %s`,
-			rateLimiterConfig.Spec.RateLimitProperty.Descriptors[0].Key,
-			rateLimiterConfig.Spec.RateLimitProperty.Descriptors[0].Key)
-
-		expectedPatch := convertYaml2Struct(expectedPatchValue)
-
-		actualPatchValue := buildVirtualHostPatchValue(rateLimiterConfig)
-		actualPatch := convertYaml2Struct(actualPatchValue)
-
-		a.Equal(expectedPatch, actualPatch)
-	})
-}
-
-func Test_BuildVirtualHostPatchValue_PathSuccess(t *testing.T) {
-	t.Parallel()
-	a := assert.New(t)
-
-	t.Run("success build patch value for virtual host (path)", func(t *testing.T) {
-		rateLimiterConfig := &v1.RateLimiterConfig{
-			Spec: v1.RateLimiterConfigSpec{
-				RateLimitProperty: v1.RateLimitProperty{
-					Descriptors: []v1.Descriptor{{
-						Key:   "header_match",
-						Value: utils.BuildRandomString(3),
-					}},
-				},
-			},
-		}
-
-		var expectedPatchValue = fmt.Sprintf(`
-          rate_limits:
-            - actions:
-                - header_value_match: 
-                    descriptor_value: %s
-                    expect_match: true
-                    headers:
-                    - exact_match: %s
-                      name: ":path"`,
-			rateLimiterConfig.Spec.RateLimitProperty.Descriptors[0].Value,
-			rateLimiterConfig.Spec.RateLimitProperty.Descriptors[0].Value)
+			header, header)
 
 		expectedPatch := convertYaml2Struct(expectedPatchValue)
 

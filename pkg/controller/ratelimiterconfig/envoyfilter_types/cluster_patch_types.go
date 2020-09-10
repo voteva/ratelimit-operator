@@ -29,5 +29,5 @@ type LoadAssignment struct {
 type Http2ProtocolOption struct{}
 
 type ClusterPatchValues struct {
-	Name                 string              `json:"name" yaml:"name"`
+	Name string `json:"name" yaml:"name"`
 }

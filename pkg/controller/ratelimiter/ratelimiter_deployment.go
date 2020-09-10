@@ -66,30 +66,31 @@ func buildDeploymentForService(instance *v1.RateLimiter) *appsv1.Deployment {
 					Annotations: utils.Merge(utils.AnnotationSidecarIstio(), utils.AnnotationMetricsIstio(9102)),
 				},
 				Spec: corev1.PodSpec{
-					Volumes: []corev1.Volume{{
-						Name: "config",
-						VolumeSource: corev1.VolumeSource{
-							ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: instance.Name,
+					Volumes: []corev1.Volume{
+						{
+							Name: "config-ratelimiter",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: instance.Name,
+									},
+									DefaultMode: &defaultMode,
 								},
-								DefaultMode: &defaultMode,
 							},
 						},
-					},
 						{
 							Name: "config-statsd-exporter",
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: "rate-limiter-statsd-exporter",
+										Name: instance.Name + "-statsd-exporter",
 									},
 									DefaultMode: &defaultMode,
 								}},
 						},
 					},
 					Containers: []corev1.Container{
-						buildServiceContainer(instance),
+						buildRateLimiterContainer(instance),
 						buildStatsdExporterContainer("statsd-exporter"),
 					},
 				},

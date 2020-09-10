@@ -96,6 +96,10 @@ func (r ReconcileRateLimiter) Reconcile(request reconcile.Request) (reconcile.Re
 		return result, err
 	}
 
+	if result, err := r.reconcileConfigMapStatsd(ctx, instance); err != nil || result.Requeue {
+		return result, err
+	}
+
 	if result, err := r.reconcileDeploymentForRedis(ctx, instance); err != nil || result.Requeue {
 		return result, err
 	}
@@ -121,11 +125,6 @@ func isNeedUpdateWithDefaults(instance *v1.RateLimiter) bool {
 	if instance.Spec.LogLevel == nil {
 		defaultLogLevel := v1.WARN
 		instance.Spec.LogLevel = &defaultLogLevel
-		needUpdate = true
-	}
-	if instance.Spec.Port == nil {
-		defaultPort := constants.DEFAULT_RATELIMITER_PORT
-		instance.Spec.Port = &defaultPort
 		needUpdate = true
 	}
 	if instance.Spec.Size == nil {

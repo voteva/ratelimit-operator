@@ -49,7 +49,7 @@ func (r *ReconcileRateLimiter) reconcileServiceForRedis(ctx context.Context, ins
 
 func buildServiceForRedis(instance *v1.RateLimiter) *corev1.Service {
 	serviceName := buildNameForRedis(instance.Name)
-	servicePort := constants.REDIS_PORT
+	servicePort := constants.DEFAULT_REDIS_PORT
 
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
