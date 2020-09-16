@@ -205,7 +205,7 @@ func Test_Reconcile_Success(t *testing.T) {
 
 		a.Nil(err)
 		a.NotNil(reconcileResult)
-		a.False(reconcileResult.Requeue)
+		a.True(reconcileResult.Requeue)
 	})
 }
 
