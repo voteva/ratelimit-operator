@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
-	"ratelimit-operator/pkg/constants"
-	"ratelimit-operator/pkg/utils"
+	"github.com/voteva/ratelimit-operator/pkg/constants"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"testing"
 )
 

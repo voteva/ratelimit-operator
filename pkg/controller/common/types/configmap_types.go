@@ -1,6 +1,6 @@
 package types
 
-import v1 "ratelimit-operator/pkg/apis/operators/v1"
+import v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
 
 type RateLimitProperty struct {
 	Domain      string          `json:"domain" yaml:"domain"`

@@ -1816,6 +1816,6 @@ message InternalRedirectPolicy {
   bool allow_cross_scheme_redirect = 4;
 }
 
-option go_package = "ratelimit-operator/pkg/apis/operators/v1/external/envoy/config/route/v3";
+option go_package = "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1/external/envoy/config/route/v3";
 import "gogoproto/gogo.proto";
 option (gogoproto.equal_all) = true;

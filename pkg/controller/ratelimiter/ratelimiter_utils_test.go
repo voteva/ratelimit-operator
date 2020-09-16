@@ -2,8 +2,8 @@ package ratelimiter
 
 import (
 	"github.com/stretchr/testify/assert"
-	"ratelimit-operator/pkg/constants"
-	"ratelimit-operator/pkg/utils"
+	"github.com/voteva/ratelimit-operator/pkg/constants"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"strconv"
 	"testing"
 )

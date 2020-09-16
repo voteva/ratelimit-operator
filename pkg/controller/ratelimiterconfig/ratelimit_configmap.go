@@ -2,8 +2,8 @@ package ratelimiterconfig
 
 import (
 	"context"
-	"ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/controller/common"
+	"github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/controller/common"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 

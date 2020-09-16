@@ -3,9 +3,9 @@ package configmapwatcher
 import (
 	"context"
 	"k8s.io/apimachinery/pkg/types"
-	"ratelimit-operator/pkg/controller/common"
+	"github.com/voteva/ratelimit-operator/pkg/controller/common"
 
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"

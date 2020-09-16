@@ -13,8 +13,8 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 
-	"ratelimit-operator/pkg/apis"
-	"ratelimit-operator/pkg/controller"
+	"github.com/voteva/ratelimit-operator/pkg/apis"
+	"github.com/voteva/ratelimit-operator/pkg/controller"
 	"ratelimit-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"

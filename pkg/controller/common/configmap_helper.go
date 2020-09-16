@@ -2,8 +2,8 @@ package common
 
 import (
 	"github.com/ghodss/yaml"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/controller/common/types"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/controller/common/types"
 )
 
 func BuildRateLimitPropertyValue(instance *v1.RateLimiterConfig) string {

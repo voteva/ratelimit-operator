@@ -8,9 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	"ratelimit-operator/pkg/apis"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/utils"
+	"github.com/voteva/ratelimit-operator/pkg/apis"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 

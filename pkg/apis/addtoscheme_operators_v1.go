@@ -1,7 +1,7 @@
 package apis
 
 import (
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
 )
 
 func init() {

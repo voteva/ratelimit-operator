@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"ratelimit-operator/pkg/controller/configmapwatcher"
-	"ratelimit-operator/pkg/controller/ratelimiterconfig"
-	"ratelimit-operator/pkg/controller/ratelimiter"
+	"github.com/voteva/ratelimit-operator/pkg/controller/configmapwatcher"
+	"github.com/voteva/ratelimit-operator/pkg/controller/ratelimiterconfig"
+	"github.com/voteva/ratelimit-operator/pkg/controller/ratelimiter"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 

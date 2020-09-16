@@ -2,7 +2,7 @@ package common
 
 import (
 	"github.com/stretchr/testify/assert"
-	"ratelimit-operator/pkg/utils"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"testing"
 )
 

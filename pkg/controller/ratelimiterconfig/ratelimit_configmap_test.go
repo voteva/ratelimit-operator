@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/types"
-	"ratelimit-operator/pkg/controller/common"
-	"ratelimit-operator/pkg/utils"
+	"github.com/voteva/ratelimit-operator/pkg/controller/common"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"testing"
 )
 

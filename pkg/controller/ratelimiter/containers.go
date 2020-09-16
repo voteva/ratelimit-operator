@@ -3,8 +3,8 @@ package ratelimiter
 import (
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/constants"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/constants"
 )
 
 func buildRedisContainer(name string) corev1.Container {

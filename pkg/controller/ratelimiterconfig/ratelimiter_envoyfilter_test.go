@@ -7,8 +7,8 @@ import (
 	networking "istio.io/api/networking/v1alpha3"
 	"istio.io/client-go/pkg/apis/networking/v1alpha3"
 	"k8s.io/apimachinery/pkg/types"
-	"ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/utils"
+	"github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"testing"
 )
 

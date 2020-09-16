@@ -3,7 +3,7 @@ package utils
 import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
 	"testing"
 )
 

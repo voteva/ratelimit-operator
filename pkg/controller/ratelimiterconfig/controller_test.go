@@ -3,8 +3,8 @@ package ratelimiterconfig
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/utils"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"testing"
 )

@@ -1,7 +1,7 @@
 package ratelimiter
 
 import (
-	"ratelimit-operator/pkg/constants"
+	"github.com/voteva/ratelimit-operator/pkg/constants"
 	"strconv"
 )
 

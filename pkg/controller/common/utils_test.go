@@ -2,8 +2,8 @@ package common
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "ratelimit-operator/pkg/apis/operators/v1"
-	"ratelimit-operator/pkg/utils"
+	v1 "github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/utils"
 )
 
 func buildRateLimiterConfig(rl *v1.RateLimiter) *v1.RateLimiterConfig {

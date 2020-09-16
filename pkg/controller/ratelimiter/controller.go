@@ -4,10 +4,10 @@ import (
 	"context"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"ratelimit-operator/pkg/constants"
-	"ratelimit-operator/pkg/controller/common"
+	"github.com/voteva/ratelimit-operator/pkg/constants"
+	"github.com/voteva/ratelimit-operator/pkg/controller/common"
 
-	"ratelimit-operator/pkg/apis/operators/v1"
+	"github.com/voteva/ratelimit-operator/pkg/apis/operators/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
