@@ -15,7 +15,7 @@ import (
 
 	"github.com/voteva/ratelimit-operator/pkg/apis"
 	"github.com/voteva/ratelimit-operator/pkg/controller"
-	"ratelimit-operator/version"
+	"github.com/voteva/ratelimit-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
