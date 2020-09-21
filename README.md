@@ -4,8 +4,8 @@
 
 * Create the sample CRD
 ~~~
-$ oc create -f deploy/crds/operators.example.com_ratelimiters_crd.yaml
-$ oc create -f deploy/crds/operators.example.com_ratelimiterconfigs_crd.yaml
+$ oc apply -f deploy/crds/operators.example.com_ratelimiters_crd.yaml
+$ oc apply -f deploy/crds/operators.example.com_ratelimiterconfigs_crd.yaml
 ~~~
 * Select the namespace
 ~~~
@@ -13,10 +13,10 @@ $ oc project <your-namespace>
 ~~~
 * Deploy the Operator along with set-up the RBAC
 ~~~
-$ oc create -f deploy/service_account.yaml
-$ oc create -f deploy/role.yaml
-$ oc create -f deploy/role_binding.yaml
-$ oc create -f deploy/operator.yaml
+$ oc apply -f deploy/service_account.yaml
+$ oc apply -f deploy/role.yaml
+$ oc apply -f deploy/role_binding.yaml
+$ oc apply -f deploy/operator.yaml
 ~~~
 
 * Create the RateLimiter and RateLimiterConfig Custom Resources (CR)
